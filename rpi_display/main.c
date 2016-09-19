@@ -48,7 +48,6 @@ int main(int argc, char** argv)
         "SDL_CreateWindow error: %s\n",
         SDL_GetError()
         );
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -59,26 +58,21 @@ int main(int argc, char** argv)
       0                                         // render flags
       );
   if (!renderer) {
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "SDL_CreateRenderer error: %s\n",
         SDL_GetError()
         );
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
   // Initialize SDL_TTF
   if (TTF_Init() != 0) {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "Unable to initialize SDL_TTF: %s\n",
         TTF_GetError()
         );
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -88,15 +82,11 @@ int main(int argc, char** argv)
       FONT_SIZE_CLOCK                           // point size based on 72DPI
       );
   if (!clock_font) {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "TTF_OpenFont error: %s\n",
         TTF_GetError()
         );
-    TTF_Quit();
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -106,16 +96,11 @@ int main(int argc, char** argv)
       FONT_SIZE_QUOTE                           // point size based on 72DPI
       );
   if (!quote_font) {
-    TTF_CloseFont(clock_font);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "TTF_OpenFont error: %s\n",
         TTF_GetError()
         );
-    TTF_Quit();
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -127,17 +112,11 @@ int main(int argc, char** argv)
       background_color                          // background color
       );
   if (!clock_surface) {
-    TTF_CloseFont(clock_font);
-    TTF_CloseFont(quote_font);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "TTF_RenderText_Solid error: %s\n",
         TTF_GetError()
         );
-    TTF_Quit();
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -149,18 +128,11 @@ int main(int argc, char** argv)
       background_color                          // background color
       );
   if (!quote_surface) {
-    TTF_CloseFont(clock_font);
-    TTF_CloseFont(quote_font);
-    SDL_FreeSurface(clock_surface);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "TTF_RenderText_Solid error: %s\n",
         TTF_GetError()
         );
-    TTF_Quit();
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -170,19 +142,11 @@ int main(int argc, char** argv)
       clock_surface                             // surface
       );
   if (!clock_surface) {
-    TTF_CloseFont(clock_font);
-    TTF_CloseFont(quote_font);
-    SDL_FreeSurface(clock_surface);
-    SDL_FreeSurface(quote_surface);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "SDL_CreateTextureFromSurface error: %s\n",
         SDL_GetError()
         );
-    TTF_Quit();
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -192,49 +156,46 @@ int main(int argc, char** argv)
       quote_surface                             // surface
       );
   if (!quote_surface) {
-    TTF_CloseFont(clock_font);
-    TTF_CloseFont(quote_font);
-    SDL_FreeSurface(clock_surface);
-    SDL_FreeSurface(quote_surface);
-    SDL_DestroyTexture(clock_texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     fprintf(
         stderr,
         "SDL_CreateTextureFromSurface error: %s\n",
         SDL_GetError()
         );
-    TTF_Quit();
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  // Basic render loop
+  // Size rectangles
   SDL_Rect clock_src_rect;
   SDL_Rect quote_src_rect;
   SDL_Rect clock_dst_rect;
   SDL_Rect quote_dst_rect;
 
-  // error check this?
-  TTF_SizeText(quote_font, "This is an example quote!", &quote_dst_rect.w, &quote_dst_rect.h);
+  TTF_SizeText(
+      quote_font,
+      "This is an example quote!",
+      &quote_dst_rect.w,
+      &quote_dst_rect.h
+      );
 
   clock_src_rect.x = 0;
-  quote_src_rect.x = 0;
   clock_src_rect.y = 0;
-  quote_src_rect.y = 0;
   clock_src_rect.w = clock_surface->w;
-  quote_src_rect.w = quote_surface->w;
   clock_src_rect.h = clock_surface->h;
-  quote_src_rect.h = quote_surface->h;
   clock_dst_rect.x = 20;
-  quote_dst_rect.x = (WINDOW_WIDTH - quote_dst_rect.w) / 2;
   clock_dst_rect.y = 20;
-  quote_dst_rect.y = WINDOW_HEIGHT - quote_dst_rect.h - 10;
   clock_dst_rect.w = clock_surface->w;
-  quote_dst_rect.w = quote_surface->w;
   clock_dst_rect.h = clock_surface->h;
+
+  quote_src_rect.x = 0;
+  quote_src_rect.y = 0;
+  quote_src_rect.w = quote_surface->w;
+  quote_src_rect.h = quote_surface->h;
+  quote_dst_rect.x = (WINDOW_WIDTH - quote_dst_rect.w) / 2;
+  quote_dst_rect.y = WINDOW_HEIGHT - quote_dst_rect.h - 10;
+  quote_dst_rect.w = quote_surface->w;
   quote_dst_rect.h = quote_surface->h;
 
+  // Basic render loop
   for (int i = 0; i < 6; i++) {
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, clock_texture, &clock_src_rect, &clock_dst_rect);
