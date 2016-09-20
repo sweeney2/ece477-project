@@ -2,7 +2,7 @@ all: clean release
 .PHONY: all
 
 release:
-	gcc -lSDL2 -lSDL2_ttf main.c
+	gcc -std=c99 -lSDL2 -lSDL2_ttf main.c
 .PHONY: release
 
 clean:
