@@ -1,40 +1,74 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <time.h>
+
 
 // window information
 #define WINDOW_WIDTH 720
-#define WINDOW_HEIGHT 900  //1280
-
-// color information
-#define FOREGROUND_COLOR {255, 255, 255}
-#define BACKGROUND_COLOR {0, 0, 0}
+#define WINDOW_HEIGHT 900
 
 // font information
 #define FONT_FACE "Roboto-Regular.ttf"
 #define FONT_SIZE_CLOCK 72
-#define FONT_SIZE_QUOTE 36
 
+
+char *gettime(void)
+{
+  char        * result        ;
+  time_t        raw_time      ;
+  struct tm   * timeinfo      ;
+  char          ampm[3] = "AM";
+
+  time(&raw_time);
+  timeinfo = localtime(&raw_time);
+
+  // set AM/PM
+  if (timeinfo->tm_hour > 11) {
+    ampm[0] = 'P';
+  }
+
+  result = (char*) malloc(10 * sizeof(char));
+  sprintf(
+      result,
+      "%d:%02d %s",
+      (timeinfo->tm_hour + 11) % 12 + 1,
+      timeinfo->tm_min,
+      ampm
+      );
+  return result;
+}
 
 int main(int argc, char** argv)
 {
-  // Initialize SDL. Exit on failure.
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    fprintf(
-        stderr,
-        "Unable to initialize SDL: %s\n",
-        SDL_GetError()
-        );
-    return EXIT_FAILURE;
-  }
+  // variable declarations
+  SDL_Window    * window                  = NULL;
+  SDL_Renderer  * renderer                = NULL;
+  SDL_Surface   * clock_surface           = NULL;
+  SDL_Surface   * clock_surface_next      = NULL;
+  SDL_Texture   * clock_texture           = NULL;
+  SDL_Rect        clock_rect                    ;
+  SDL_Color       foreground_color              ;
+  SDL_Color       background_color              ;
+  TTF_Font      * clock_font              = NULL;
+  char          * time_current            = NULL;
+  char          * time_last               = NULL;
 
-  // Initialize colors
-  SDL_Color foreground_color = FOREGROUND_COLOR;
-  SDL_Color background_color = BACKGROUND_COLOR;
+  // initialize colors
+  foreground_color.r = 255;
+  foreground_color.g = 255;
+  foreground_color.b = 255;
+  background_color.r = 0;
+  background_color.g = 0;
+  background_color.b = 0;
 
-  // Create a window. Exit on failure.
-  SDL_Window *window = SDL_CreateWindow(
+  // initialize SDL
+  SDL_Init(SDL_INIT_VIDEO);
+
+  // create a window. Exit on failure.
+  window = SDL_CreateWindow(
       "Magic Mirror",                           // title
       SDL_WINDOWPOS_CENTERED,                   // x position
       SDL_WINDOWPOS_CENTERED,                   // y position
@@ -42,176 +76,77 @@ int main(int argc, char** argv)
       WINDOW_HEIGHT,                            // height
       SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS    // window flags
       );
-  if (!window) {
-    fprintf(
-        stderr,
-        "SDL_CreateWindow error: %s\n",
-        SDL_GetError()
-        );
-    return EXIT_FAILURE;
-  }
 
-  // Create a renderer. Exit on failure.
-  SDL_Renderer *renderer = SDL_CreateRenderer(
+  // create a renderer. Exit on failure.
+  renderer = SDL_CreateRenderer(
       window,                                   // this renderer's window
       -1,                                       // rendering driver index
       0                                         // render flags
       );
-  if (!renderer) {
-    fprintf(
-        stderr,
-        "SDL_CreateRenderer error: %s\n",
-        SDL_GetError()
-        );
-    return EXIT_FAILURE;
-  }
 
-  // Initialize SDL_TTF
-  if (TTF_Init() != 0) {
-    fprintf(
-        stderr,
-        "Unable to initialize SDL_TTF: %s\n",
-        TTF_GetError()
-        );
-    return EXIT_FAILURE;
-  }
+  // initialize SDL_TTF
+  TTF_Init();
 
-  // Open TTF font for clock
-  TTF_Font *clock_font = TTF_OpenFont(
+  // open TTF font for clock
+  clock_font = TTF_OpenFont(
       FONT_FACE,                                // font name
       FONT_SIZE_CLOCK                           // point size based on 72DPI
       );
-  if (!clock_font) {
-    fprintf(
-        stderr,
-        "TTF_OpenFont error: %s\n",
-        TTF_GetError()
-        );
-    return EXIT_FAILURE;
-  }
 
-  // Open TTF font for quote
-  TTF_Font *quote_font = TTF_OpenFont(
-      FONT_FACE,                                // font name
-      FONT_SIZE_QUOTE                           // point size based on 72DPI
-      );
-  if (!quote_font) {
-    fprintf(
-        stderr,
-        "TTF_OpenFont error: %s\n",
-        TTF_GetError()
-        );
-    return EXIT_FAILURE;
-  }
+  // get time
+  time_last = (char*) malloc(30 * sizeof(char));
+  strcpy(time_last, "");
+  time_current = gettime();
 
-  // Render text using Shaded rendering
-  SDL_Surface *clock_surface = TTF_RenderText_Shaded(
-      clock_font,                               // TTF_Font
-      "12:34 PM",                               // string to render
-      foreground_color,                         // string color
-      background_color                          // background color
-      );
-  if (!clock_surface) {
-    fprintf(
-        stderr,
-        "TTF_RenderText_Solid error: %s\n",
-        TTF_GetError()
-        );
-    return EXIT_FAILURE;
-  }
+  SDL_Event event;
+  int loop = 1;
 
-  // Render text using Shaded rendering
-  SDL_Surface *quote_surface = TTF_RenderText_Shaded(
-      quote_font,                               // TTF_Font
-      "This is an example quote!",              // string to render
-      foreground_color,                         // string color
-      background_color                          // background color
-      );
-  if (!quote_surface) {
-    fprintf(
-        stderr,
-        "TTF_RenderText_Solid error: %s\n",
-        TTF_GetError()
-        );
-    return EXIT_FAILURE;
-  }
+  while (loop) {
+    while (SDL_PollEvent(&event)) {
+      if (event.type == SDL_KEYDOWN) {
+        loop = 0;
+      }
+    }
+    free(time_current);
+    time_current = gettime();
+    if (strcmp(time_current, time_last)) {
+      // render text using Shaded rendering
+      printf("rerendering screen\n");
+      clock_surface = TTF_RenderText_Shaded(
+          clock_font,                               // TTF_Font
+          time_current,                             // string to render
+          foreground_color,                         // string color
+          background_color                          // background color
+          );
+      clock_texture = SDL_CreateTextureFromSurface(
+          renderer,                                 // renderer
+          clock_surface                             // surface
+          );
+      clock_rect.w = clock_surface->w;
+      clock_rect.h = clock_surface->h;
+      clock_rect.x = 20;
+      clock_rect.y = 20;
 
-  // create texture from rendered surface
-  SDL_Texture *clock_texture = SDL_CreateTextureFromSurface(
-      renderer,                                 // renderer
-      clock_surface                             // surface
-      );
-  if (!clock_surface) {
-    fprintf(
-        stderr,
-        "SDL_CreateTextureFromSurface error: %s\n",
-        SDL_GetError()
-        );
-    return EXIT_FAILURE;
-  }
+      SDL_FreeSurface(clock_surface);
+      SDL_RenderClear(renderer);
+      SDL_RenderCopy(renderer, clock_texture, NULL, &clock_rect);
+      SDL_RenderPresent(renderer);
 
-  // create texture from rendered surface
-  SDL_Texture *quote_texture = SDL_CreateTextureFromSurface(
-      renderer,                                 // renderer
-      quote_surface                             // surface
-      );
-  if (!quote_surface) {
-    fprintf(
-        stderr,
-        "SDL_CreateTextureFromSurface error: %s\n",
-        SDL_GetError()
-        );
-    return EXIT_FAILURE;
-  }
-
-  // Size rectangles
-  SDL_Rect clock_src_rect;
-  SDL_Rect quote_src_rect;
-  SDL_Rect clock_dst_rect;
-  SDL_Rect quote_dst_rect;
-
-  TTF_SizeText(
-      quote_font,
-      "This is an example quote!",
-      &quote_dst_rect.w,
-      &quote_dst_rect.h
-      );
-
-  clock_src_rect.x = 0;
-  clock_src_rect.y = 0;
-  clock_src_rect.w = clock_surface->w;
-  clock_src_rect.h = clock_surface->h;
-  clock_dst_rect.x = 20;
-  clock_dst_rect.y = 20;
-  clock_dst_rect.w = clock_surface->w;
-  clock_dst_rect.h = clock_surface->h;
-
-  quote_src_rect.x = 0;
-  quote_src_rect.y = 0;
-  quote_src_rect.w = quote_surface->w;
-  quote_src_rect.h = quote_surface->h;
-  quote_dst_rect.x = (WINDOW_WIDTH - quote_dst_rect.w) / 2;
-  quote_dst_rect.y = WINDOW_HEIGHT - quote_dst_rect.h - 10;
-  quote_dst_rect.w = quote_surface->w;
-  quote_dst_rect.h = quote_surface->h;
-
-  // Basic render loop
-  for (int i = 0; i < 6; i++) {
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, clock_texture, &clock_src_rect, &clock_dst_rect);
-    SDL_RenderCopy(renderer, quote_texture, &quote_src_rect, &quote_dst_rect);
-    SDL_RenderPresent(renderer);
-    SDL_Delay(1000);
+      SDL_DestroyTexture(clock_texture);
+      strcpy(time_last, time_current);
+    } else {
+//    printf("Nothing to render: date strings differ (%s) vs (%s)\n",
+//        time_current,
+//        time_last
+//        );
+    }
   }
 
   // Clean up
+  free(time_current);
+  free(time_last);
   TTF_CloseFont(clock_font);
-  TTF_CloseFont(quote_font);
   TTF_Quit();
-  SDL_FreeSurface(clock_surface);
-  SDL_FreeSurface(quote_surface);
-  SDL_DestroyTexture(clock_texture);
-  SDL_DestroyTexture(quote_texture);
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
