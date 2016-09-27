@@ -74,7 +74,8 @@ int main(int argc, char** argv)
       SDL_WINDOWPOS_CENTERED,                   // y position
       WINDOW_WIDTH,                             // width
       WINDOW_HEIGHT,                            // height
-      SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS    // window flags
+      SDL_WINDOW_SHOWN                          // window flags
+        |SDL_WINDOW_FULLSCREEN_DESKTOP
       );
 
   // create a renderer. Exit on failure.
