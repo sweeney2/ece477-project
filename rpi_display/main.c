@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <time.h>
+#include <unistd.h>
 
 
 // window information
@@ -11,7 +12,8 @@
 #define WINDOW_HEIGHT 900
 
 // font information
-#define FONT_FACE "Roboto-Regular.ttf"
+#define FONT_PATH "/home/pi/ece477-project/rpi_display/Roboto-Regular.ttf"
+#define FONT_PATH_ALT "Roboto-Regular.ttf"
 #define FONT_SIZE_CLOCK 100
 
 
@@ -89,10 +91,24 @@ int main(int argc, char** argv)
   TTF_Init();
 
   // open TTF font for clock
-  clock_font = TTF_OpenFont(
-      FONT_FACE,                                // font name
-      FONT_SIZE_CLOCK                           // point size based on 72DPI
-      );
+  if (access(FONT_PATH, F_OK) != -1) {
+    clock_font = TTF_OpenFont(
+        FONT_PATH,                                // font name
+        FONT_SIZE_CLOCK                           // point size based on 72DPI
+        );
+  } else if (access(FONT_PATH_ALT, F_OK) != -1) {
+    clock_font = TTF_OpenFont(
+        FONT_PATH_ALT,
+        FONT_SIZE_CLOCK
+        );
+  } else {
+    fprintf(stderr, "Cannot find font: %s\n", FONT_PATH_ALT);
+    TTF_Quit();
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return EXIT_SUCCESS;
+  }
 
   // get time
   time_last = (char*) malloc(30 * sizeof(char));
