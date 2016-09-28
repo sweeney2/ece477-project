@@ -14,7 +14,9 @@
 // font information
 #define FONT_PATH "/home/pi/ece477-project/rpi-display/Roboto-Regular.ttf"
 #define FONT_PATH_ALT "Roboto-Regular.ttf"
+
 #define FONT_SIZE_CLOCK 100
+#define FONT_SIZE_QUOTE 60
 
 
 char *get_time(void)
@@ -42,6 +44,8 @@ char *get_time(void)
       );
   return result;
 }
+
+
 
 int main(int argc, char** argv)
 {
