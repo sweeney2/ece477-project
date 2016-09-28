@@ -17,7 +17,7 @@
 #define FONT_SIZE_CLOCK 100
 
 
-char *gettime(void)
+char *get_time(void)
 {
   char        * result        ;
   time_t        raw_time      ;
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
   // get time
   time_last = (char*) malloc(30 * sizeof(char));
   strcpy(time_last, "");
-  time_current = gettime();
+  time_current = get_time();
 
   SDL_Event event;
   int loop = 1;
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
       }
     }
     free(time_current);
-    time_current = gettime();
+    time_current = get_time();
     if (strcmp(time_current, time_last)) {
       // render text using Shaded rendering
       printf("rerendering screen\n");
