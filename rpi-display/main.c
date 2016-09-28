@@ -12,7 +12,7 @@
 #define WINDOW_HEIGHT 900
 
 // font information
-#define FONT_PATH "/home/pi/ece477-project/rpi_display/Roboto-Regular.ttf"
+#define FONT_PATH "/home/pi/ece477-project/rpi-display/Roboto-Regular.ttf"
 #define FONT_PATH_ALT "Roboto-Regular.ttf"
 #define FONT_SIZE_CLOCK 100
 
