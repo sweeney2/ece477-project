@@ -66,9 +66,9 @@ int main(int argc, char** argv)
   foreground_color.r = 255;
   foreground_color.g = 255;
   foreground_color.b = 255;
-  background_color.r = 40;
-  background_color.g = 40;
-  background_color.b = 40;
+  background_color.r = 0;
+  background_color.g = 0;
+  background_color.b = 0;
 
   // initialize SDL
   SDL_Init(SDL_INIT_VIDEO);
