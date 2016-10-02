@@ -1,7 +1,7 @@
 CC := gcc
 SRCDIR = src
 INCLUDE := include
-TARGET := bin/magic
+TARGET := magic
 
 FLAGS := -std=c99
 LFLAGS := -lSDL2 -lSDL2_ttf
@@ -16,6 +16,6 @@ release:
 .PHONY: release
 
 clean:
-	@rm -rf bin/magic
+	@rm -rf magic
 .PHONY: clean
 

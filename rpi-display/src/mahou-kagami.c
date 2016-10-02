@@ -28,15 +28,15 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
   fontInfo_st* font_info = (fontInfo_st*) malloc(FONT_COUNT * sizeof(fontInfo_st));
 
   fontInfo_st font_debug = {
-    .path = "Roboto-Regular.ttf",
+    .path = "assets/Roboto-Regular.ttf",
     .size = 20
     };
   fontInfo_st font_clock = {
-    .path = "Roboto-Regular.ttf",
+    .path = "assets/Roboto-Regular.ttf",
     .size = 120
     };
   fontInfo_st font_quote = {
-    .path = "Roboto-Regular.ttf",
+    .path = "assets/Roboto-Regular.ttf",
     .size = 40
     };
   font_info[DEBUG] = font_debug;
