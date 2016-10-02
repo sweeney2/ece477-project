@@ -5,11 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+
+#include "mahou-kagami.h"
 
 
 int
-update(void);
+update(state_st* state);
 
 
 #endif  // __MAHOU_UPDATE

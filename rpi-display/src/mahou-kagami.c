@@ -151,9 +151,15 @@ main(void)
   if (init(&window, &renderer, &fonts))
     return EXIT_FAILURE;
 
+  // initialize state structure
+  state_st state = {
+    .current = HOME,
+    .timer = 0
+  };
+
   // execute main loop
-  while (update()) {
-    render();
+  while (update(&state)) {
+    render(&state, window, renderer, fonts);
   }
 
   // cleanup

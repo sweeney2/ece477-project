@@ -7,9 +7,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
+#include "mahou-kagami.h"
+
 
 int
-render(void);
+render(state_st* state, SDL_Window* window, SDL_Renderer* renderer, TTF_Font** fonts);
 
 
 #endif  // __MAHOU_RENDER
