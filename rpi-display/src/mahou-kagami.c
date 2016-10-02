@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include <time.h>
 #include <unistd.h>
+#include "mahou-update.h"
+#include "mahou-render.h"
+
 
 enum font {
   DEBUG,
