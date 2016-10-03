@@ -5,6 +5,8 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
 {
   // TODO: These should be read in from a config file.
   //       They live here for now.
+
+  // font settings
   fontInfo_st* font_info = (fontInfo_st*) malloc(FONT_COUNT * sizeof(fontInfo_st));
 
   fontInfo_st font_debug = {
@@ -22,6 +24,8 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
   font_info[DEBUG] = font_debug;
   font_info[CLOCK] = font_clock;
   font_info[QUOTE] = font_quote;
+
+
 
   // initialize SDL
   if (SDL_Init(SDL_INIT_VIDEO)) {
@@ -142,6 +146,84 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
 int
 main(void)
 {
+  // TODO: These should be read in from a config file.
+  //       They live here for now.
+
+  // screen settings
+  adjScreens_st* adj_screens = (adjScreens_st*) malloc(SCREEN_COUNT * sizeof(adjScreens_st));
+
+  adjScreens_st screen_home = {
+    .up = PHOTO,
+    .down = NONE,
+    .left = TIMER_READY,
+    .right = WATER_DAY
+    };
+  adjScreens_st screen_photo = {
+    .up = NONE,
+    .down = HOME,
+    .left = NONE,
+    .right = NONE
+    };
+  adjScreens_st screen_timer_ready = {
+    .up = TIMER_ACTIVE,
+    .down = NONE,
+    .left = NONE,
+    .right = HOME
+    };
+  adjScreens_st screen_timer_active = {
+    .up = NONE,
+    .down = TIMER_PAUSE,
+    .left = NONE,
+    .right = NONE
+    };
+  adjScreens_st screen_timer_pause = {
+    .up = TIMER_ACTIVE,
+    .down = NONE,
+    .left = TIMER_READY,
+    .right = NONE
+    };
+  adjScreens_st screen_timer_done = {
+    .up = NONE,
+    .down = NONE,
+    .left = TIMER_READY,
+    .right = HOME
+    };
+  adjScreens_st screen_water_day = {
+    .up = WATER_WEEK,
+    .down = NONE,
+    .left = HOME,
+    .right = NONE
+    };
+  adjScreens_st screen_water_week = {
+    .up = WATER_MONTH,
+    .down = WATER_DAY,
+    .left = HOME,
+    .right = NONE
+    };
+  adjScreens_st screen_water_month = {
+    .up = WATER_YEAR,
+    .down = WATER_WEEK,
+    .left = HOME,
+    .right = NONE
+    };
+  adjScreens_st screen_water_year = {
+    .up = NONE,
+    .down = WATER_MONTH,
+    .left = HOME,
+    .right = NONE
+    };
+  adj_screens[HOME] = screen_home;
+  adj_screens[PHOTO] = screen_photo;
+  adj_screens[TIMER_READY] = screen_timer_ready;
+  adj_screens[TIMER_ACTIVE] = screen_timer_active;
+  adj_screens[TIMER_PAUSE] = screen_timer_pause;
+  adj_screens[TIMER_DONE] = screen_timer_done;
+  adj_screens[WATER_DAY] = screen_water_day;
+  adj_screens[WATER_WEEK] = screen_water_week;
+  adj_screens[WATER_MONTH] = screen_water_month;
+  adj_screens[WATER_YEAR] = screen_water_year;
+
+
   // variable declarations
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
@@ -158,7 +240,7 @@ main(void)
   };
 
   // execute main loop
-  while (update(&state)) {
+  while (update(&state, adj_screens)) {
     render(&state, window, renderer, fonts);
   }
 

@@ -10,7 +10,7 @@
 
 
 int
-update(state_st* state);
+update(state_st* state, adjScreens_st* adj_screens);
 
 
 #endif  // __MAHOU_UPDATE

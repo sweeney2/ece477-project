@@ -44,7 +44,9 @@ enum screen {
   WATER_DAY,
   WATER_WEEK,
   WATER_MONTH,
-  WATER_YEAR
+  WATER_YEAR,
+  SCREEN_COUNT,
+  NONE
 };
 
 
@@ -57,6 +59,13 @@ typedef struct state_st {
   enum screen current;
   long timer;
 } state_st;
+
+typedef struct adjScreens_st {
+  enum screen up;
+  enum screen down;
+  enum screen left;
+  enum screen right;
+} adjScreens_st;
 
 
 #endif  // __MAHOU_KAGAMI_ENUMS_AND_STRUCTS
