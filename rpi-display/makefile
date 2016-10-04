@@ -4,7 +4,7 @@ INCLUDE := include
 TARGET := magic
 
 FLAGS := -std=c99
-LFLAGS := -lSDL2 -lSDL2_ttf
+LFLAGS := -lSDL2 -lSDL2_ttf -lconfig
 SOURCES := $(shell find $(SRCDIR) -type f -name "*.c")
 
 

@@ -2,6 +2,7 @@
 #define __MAHOU_KAGAMI
 
 
+#include <libconfig.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
@@ -11,9 +12,10 @@
 #include "mahou-update.h"
 #include "mahou-render.h"
 
+#define CONFIG_FILE "magic.conf"
 
 int
-init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts);
+init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts);
 
 int
 main(void);
@@ -51,7 +53,7 @@ enum screen {
 
 
 typedef struct fontInfo_st {
-  char path[80];
+  const char* path;
   int size;
 } fontInfo_st;
 

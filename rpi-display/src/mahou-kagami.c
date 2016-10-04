@@ -1,31 +1,49 @@
 #include "mahou-kagami.h"
 
 int
-init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
+init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
 {
-  // TODO: These should be read in from a config file.
-  //       They live here for now.
+  // read config
+  config_init(config);
+
+  if (config_read_file(config, CONFIG_FILE) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_read_file failed: %s\n",
+        config_error_text(config)
+        );
+    config_destroy(config);
+    return -1;
+  }
 
   // font settings
+  const char* roboto_path;
+  if (config_lookup_string(config, "magic.fonts.roboto", &roboto_path) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_string failed: %s\n",
+        config_error_text(config)
+        );
+    config_destroy(config);
+    return -1;
+  }
   fontInfo_st* font_info = (fontInfo_st*) malloc(FONT_COUNT * sizeof(fontInfo_st));
 
   fontInfo_st font_debug = {
-    .path = "assets/Roboto-Regular.ttf",
+    .path = roboto_path,
     .size = 20
     };
   fontInfo_st font_clock = {
-    .path = "assets/Roboto-Regular.ttf",
+    .path = roboto_path,
     .size = 120
     };
   fontInfo_st font_quote = {
-    .path = "assets/Roboto-Regular.ttf",
+    .path = roboto_path,
     .size = 40
     };
   font_info[DEBUG] = font_debug;
   font_info[CLOCK] = font_clock;
   font_info[QUOTE] = font_quote;
-
-
 
   // initialize SDL
   if (SDL_Init(SDL_INIT_VIDEO)) {
@@ -35,6 +53,7 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
         SDL_GetError()
         );
     free(font_info);
+    config_destroy(config);
     return -1;
   }
 
@@ -47,6 +66,7 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
         );
     SDL_Quit();
     free(font_info);
+    config_destroy(config);
     return -1;
   }
 
@@ -68,6 +88,7 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
     TTF_Quit();
     SDL_Quit();
     free(font_info);
+    config_destroy(config);
     return -1;
   }
 
@@ -87,6 +108,7 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
     TTF_Quit();
     SDL_Quit();
     free(font_info);
+    config_destroy(config);
     return -1;
   }
 
@@ -105,6 +127,7 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
       TTF_Quit();
       SDL_Quit();
       free(font_info);
+      config_destroy(config);
       return -1;
     }
   }
@@ -135,6 +158,7 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
       TTF_Quit();
       SDL_Quit();
       free(font_info);
+      config_destroy(config);
       return -1;
     }
   }
@@ -146,9 +170,6 @@ init (SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
 int
 main(void)
 {
-  // TODO: These should be read in from a config file.
-  //       They live here for now.
-
   // screen settings
   adjScreens_st* adj_screens = (adjScreens_st*) malloc(SCREEN_COUNT * sizeof(adjScreens_st));
 
@@ -225,12 +246,13 @@ main(void)
 
 
   // variable declarations
+  config_t config;
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
   TTF_Font** fonts = NULL;
 
   // call initialization routine
-  if (init(&window, &renderer, &fonts))
+  if (init(&config, &window, &renderer, &fonts))
     return EXIT_FAILURE;
 
   // initialize state structure
@@ -253,6 +275,7 @@ main(void)
   SDL_DestroyWindow(window);
   TTF_Quit();
   SDL_Quit();
+  config_destroy(&config);
 
   return EXIT_SUCCESS;
 }
