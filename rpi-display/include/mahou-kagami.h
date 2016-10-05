@@ -18,7 +18,7 @@ int
 init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts);
 
 int
-main(void);
+main(int argc, char* argv[]);
 
 
 #endif  // __MAHOU_KAGAMI

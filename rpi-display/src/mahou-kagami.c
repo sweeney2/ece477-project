@@ -3,18 +3,6 @@
 int
 init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
 {
-  // read config
-  config_init(config);
-
-  if (config_read_file(config, CONFIG_FILE) == CONFIG_FALSE) {
-    fprintf(
-        stderr,
-        "config_read_file failed: %s\n",
-        config_error_text(config)
-        );
-    config_destroy(config);
-    return -1;
-  }
 
   // font settings
   const char* roboto_path;
@@ -24,7 +12,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
         "config_lookup_string failed: %s\n",
         config_error_text(config)
         );
-    config_destroy(config);
     return -1;
   }
   fontInfo_st* font_info = (fontInfo_st*) malloc(FONT_COUNT * sizeof(fontInfo_st));
@@ -53,7 +40,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
         SDL_GetError()
         );
     free(font_info);
-    config_destroy(config);
     return -1;
   }
 
@@ -66,7 +52,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
         );
     SDL_Quit();
     free(font_info);
-    config_destroy(config);
     return -1;
   }
 
@@ -88,7 +73,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
     TTF_Quit();
     SDL_Quit();
     free(font_info);
-    config_destroy(config);
     return -1;
   }
 
@@ -108,7 +92,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
     TTF_Quit();
     SDL_Quit();
     free(font_info);
-    config_destroy(config);
     return -1;
   }
 
@@ -127,7 +110,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
       TTF_Quit();
       SDL_Quit();
       free(font_info);
-      config_destroy(config);
       return -1;
     }
   }
@@ -158,7 +140,6 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
       TTF_Quit();
       SDL_Quit();
       free(font_info);
-      config_destroy(config);
       return -1;
     }
   }
@@ -168,8 +149,47 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
 }
 
 int
-main(void)
+main(int argc, char* argv[])
 {
+  // option flags
+  int config_flag = 0;
+
+  config_t config;
+  config_init(&config);
+
+  while (argc > 1) {
+    if (!strcmp(argv[1], "--config")) {
+      if (config_read_file(&config, argv[2]) == CONFIG_FALSE) {
+        fprintf(
+            stderr,
+            "config_read_file failed: %s\n",
+            config_error_text(&config)
+            );
+        config_destroy(&config);
+        return EXIT_FAILURE;
+      }
+      config_flag = 1;
+      argv += 2;
+      argc -= 2;
+    } else {
+      fprintf(stderr, "invalid arguments\n");
+      return EXIT_FAILURE;
+    }
+  }
+
+  // default config
+  if (!config_flag) {
+    if (config_read_file(&config, CONFIG_FILE) == CONFIG_FALSE) {
+      fprintf(
+          stderr,
+          "config_read_file failed: %s\n",
+          config_error_text(&config)
+          );
+      config_destroy(&config);
+      return EXIT_FAILURE;
+    }
+  }
+
   // screen settings
   adjScreens_st* adj_screens = (adjScreens_st*) malloc(SCREEN_COUNT * sizeof(adjScreens_st));
 
@@ -246,7 +266,6 @@ main(void)
 
 
   // variable declarations
-  config_t config;
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
   TTF_Font** fonts = NULL;
