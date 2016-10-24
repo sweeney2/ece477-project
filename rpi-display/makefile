@@ -12,7 +12,7 @@ all: clean release
 .PHONY: all
 
 release:
-	$(CC) $(FLAGS) $(LFLAGS) -I$(INCLUDE) $(SOURCES) -o $(TARGET)
+	$(CC) $(FLAGS) `pkg-config --cflags --libs glib-2.0` $(LFLAGS) -I$(INCLUDE) $(SOURCES) -o $(TARGET)
 .PHONY: release
 
 clean:
