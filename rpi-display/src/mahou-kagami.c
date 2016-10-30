@@ -1,12 +1,24 @@
 #include "mahou-kagami.h"
 
 int
-init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font*** fonts)
+init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, SDL_Texture*** assets, TTF_Font*** fonts)
 {
+  // TODO: Add destroys in the proper order
+
+  // asset path
+  const char* asset_path;
+  if (config_lookup_string(config, "magic.asset_path", &asset_path) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_string failed: %s\n",
+        config_error_text(config)
+        );
+    return -1;
+  }
 
   // font settings
-  const char* roboto_path;
-  if (config_lookup_string(config, "magic.fonts.roboto", &roboto_path) == CONFIG_FALSE) {
+  const char* roboto_file;
+  if (config_lookup_string(config, "magic.fonts.roboto", &roboto_file) == CONFIG_FALSE) {
     fprintf(
         stderr,
         "config_lookup_string failed: %s\n",
@@ -15,6 +27,10 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
     return -1;
   }
   fontInfo_st* font_info = (fontInfo_st*) malloc(FONT_COUNT * sizeof(fontInfo_st));
+
+  char* roboto_path = (char*) malloc(strlen(asset_path) + strlen(roboto_file) + 1);
+  strcpy(roboto_path, asset_path);
+  strcat(roboto_path, roboto_file);
 
   fontInfo_st font_debug = {
     .path = roboto_path,
@@ -31,6 +47,66 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
   font_info[DEBUG] = font_debug;
   font_info[CLOCK] = font_clock;
   font_info[QUOTE] = font_quote;
+
+  // asset settings
+  const char* usb_file;
+  if (config_lookup_string(config, "magic.assets.usb", &usb_file) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_string failed: %s\n",
+        config_error_text(config)
+        );
+    return -1;
+  }
+  assetInfo_st* asset_info = (assetInfo_st*) malloc(ASSET_COUNT * sizeof(assetInfo_st));
+
+  char* usb_path = (char*) malloc(strlen(asset_path) + strlen(usb_file) + 1);
+  strcpy(usb_path, asset_path);
+  strcat(usb_path, usb_file);
+
+  assetInfo_st asset_usb = {
+    .path = usb_path
+    };
+  asset_info[ASSET_USB] = asset_usb;
+
+
+  // window settings
+  int x_pos, y_pos, width, height;
+  if (config_lookup_int(config, "magic.window.x_pos", &x_pos) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_int failed: %s\n",
+        config_error_text(config)
+        );
+    return -1;
+  }
+
+  if (config_lookup_int(config, "magic.window.y_pos", &y_pos) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_int failed: %s\n",
+        config_error_text(config)
+        );
+    return -1;
+  }
+
+  if (config_lookup_int(config, "magic.window.width", &width) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_int failed: %s\n",
+        config_error_text(config)
+        );
+    return -1;
+  }
+
+  if (config_lookup_int(config, "magic.window.height", &height) == CONFIG_FALSE) {
+    fprintf(
+        stderr,
+        "config_lookup_int failed: %s\n",
+        config_error_text(config)
+        );
+    return -1;
+  }
 
   // initialize SDL
   if (SDL_Init(SDL_INIT_VIDEO)) {
@@ -58,10 +134,10 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
   // create main window
   *window = SDL_CreateWindow(
       "Magic Mirror",
-      0,
-      0,
-      0,
-      0,
+      x_pos,
+      y_pos,
+      width,
+      height,
       SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP
       );
   if (!*window) {
@@ -144,9 +220,67 @@ init (config_t* config, SDL_Window** window, SDL_Renderer** renderer, TTF_Font**
     }
   }
 
+  // check asset paths
+  for (int i = 0; i < ASSET_COUNT; i++) {
+    if (access(asset_info[i].path, F_OK) == -1) {
+      fprintf(
+          stderr,
+          "[asset %d/%d] asset not found: %s\n",
+          i + 1,
+          ASSET_COUNT,
+          asset_info[i].path
+          );
+      SDL_DestroyRenderer(*renderer);
+      SDL_DestroyWindow(*window);
+      TTF_Quit();
+      SDL_Quit();
+      free(asset_info);
+      return -1;
+    }
+  }
+
+  // allocate space for assets
+  *assets = (SDL_Texture**) malloc(ASSET_COUNT * sizeof(**assets));
+
+  // create asset objects
+  SDL_Surface* temp_surface;
+  for (int i = 0; i < ASSET_COUNT; i++) {
+    temp_surface = SDL_LoadBMP(
+        asset_info[i].path
+        );
+    *(*assets + i) = SDL_CreateTextureFromSurface(
+      *renderer,
+      temp_surface
+      );
+    SDL_FreeSurface(temp_surface);
+    if (!*(*assets + i)) {
+      fprintf(
+          stderr,
+          "[asset %d/%d] SDL_CreateTextureFromSurface failed: %s\n",
+          i + 1,
+          ASSET_COUNT,
+          SDL_GetError()
+          );
+      for (int j = 0; j < i; j++) {
+        SDL_DestroyTexture(*(*assets + j));
+      }
+      free(*assets);
+      SDL_DestroyRenderer(*renderer);
+      SDL_DestroyWindow(*window);
+      TTF_Quit();
+      SDL_Quit();
+      free(asset_info);
+      return -1;
+    }
+  }
+
+
   free(font_info);
+  free(asset_info);
   return 0;
 }
+
+
 
 int
 main(int argc, char* argv[])
@@ -268,10 +402,11 @@ main(int argc, char* argv[])
   // variable declarations
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
+  SDL_Texture** assets = NULL;
   TTF_Font** fonts = NULL;
 
   // call initialization routine
-  if (init(&config, &window, &renderer, &fonts))
+  if (init(&config, &window, &renderer, &assets, &fonts))
     return EXIT_FAILURE;
 
   // initialize state structure
@@ -282,7 +417,7 @@ main(int argc, char* argv[])
 
   // execute main loop
   while (update(&state, adj_screens)) {
-    render(&state, window, renderer, fonts);
+    render(&state, window, renderer, assets, fonts);
   }
 
   // cleanup

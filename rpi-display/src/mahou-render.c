@@ -1,82 +1,87 @@
 #include "mahou-render.h"
 
 int
-render(state_st* state, SDL_Window* window, SDL_Renderer* renderer, TTF_Font** fonts)
+render(state_st* state, SDL_Window* window, SDL_Renderer* renderer, SDL_Texture** assets, TTF_Font** fonts)
 {
+  GSList* texture_list;
+  GSList* iter;
+
   SDL_Color white = {
       .r = 255,
       .g = 255,
       .b = 255
       };
-  SDL_Surface* debug_surface = NULL;
-  SDL_Texture* debug_texture = NULL;
+  SDL_Surface* temp_surface = NULL;
+  SDL_Texture* temp_texture = NULL;
+  texture_st* ts = NULL;
 
+  // state-specific rendering
   switch (state->current) {
     case HOME:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "HOME",
           white
           );
       break;
     case PHOTO:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "PHOTO",
           white
           );
       break;
     case TIMER_READY:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "TIMER_READY",
           white
           );
       break;
     case TIMER_ACTIVE:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "TIMER_ACTIVE",
           white
           );
       break;
     case TIMER_PAUSE:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "TIMER_PAUSE",
           white
           );
       break;
     case TIMER_DONE:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "TIMER_DONE",
           white
           );
       break;
     case WATER_DAY:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "WATER_DAY",
           white
           );
       break;
     case WATER_WEEK:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "WATER_WEEK",
           white
           );
       break;
     case WATER_MONTH:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "WATER_MONTH",
           white
           );
       break;
     case WATER_YEAR:
-      debug_surface = TTF_RenderText_Solid(
+      temp_surface = TTF_RenderText_Solid(
           *(fonts + DEBUG),
           "WATER_YEAR",
           white
@@ -86,18 +91,37 @@ render(state_st* state, SDL_Window* window, SDL_Renderer* renderer, TTF_Font** f
       break;
   }
 
-  debug_texture = SDL_CreateTextureFromSurface(
+  temp_texture = SDL_CreateTextureFromSurface(
       renderer,
-      debug_surface
+      temp_surface
       );
-  if (!debug_texture) {
+  if (!temp_texture) {
     fprintf(
         stderr,
         "SDL_CreateTextureFromSurface failed: %s\n",
         SDL_GetError()
         );
-    SDL_FreeSurface(debug_surface);
+    SDL_FreeSurface(temp_surface);
     return -1;
+  }
+
+  ts = (texture_st*) malloc(sizeof(texture_st));
+  ts->texture = temp_texture;
+  ts->rect.x = 4;
+  ts->rect.y = 4;
+  ts->rect.w = 0;
+  ts->rect.h = 0;
+  texture_list = g_slist_append(texture_list, &ts);
+
+  // state-agnostic rendering
+  if (state->usb == USB_IDLE) {
+    ts = (texture_st*) malloc(sizeof(texture_st));
+    ts->texture = *(assets + ASSET_USB);
+    ts->rect.x = 50;
+    ts->rect.y = 50;
+    ts->rect.w = 113;
+    ts->rect.h = 50;
+    texture_list = g_slist_append(texture_list, &ts);
   }
 
   // get size of renderer
@@ -109,24 +133,19 @@ render(state_st* state, SDL_Window* window, SDL_Renderer* renderer, TTF_Font** f
         "SDL_GetRendererOutputSize failed: %s\n",
         SDL_GetError()
         );
-    SDL_FreeSurface(debug_surface);
-    SDL_DestroyTexture(debug_texture);
+    SDL_FreeSurface(temp_surface);
+    SDL_DestroyTexture(temp_texture);
     return -1;
   }
 
-  SDL_Rect debug_rect = {
-    .x = renderer_w - debug_surface->w - 4,
-    .y = 2,
-    .w = debug_surface->w,
-    .h = debug_surface->h
-  };
-  SDL_FreeSurface(debug_surface);
-
   SDL_RenderClear(renderer);
-  SDL_RenderCopy(renderer, debug_texture, NULL, &debug_rect);
+  for (iter = texture_list; iter; iter = iter->next) {
+    ts = iter->data;
+    SDL_RenderCopy(renderer, ts->texture, NULL, &(ts->rect));
+  }
   SDL_RenderPresent(renderer);
 
-  SDL_DestroyTexture(debug_texture);
+  SDL_DestroyTexture(temp_texture);
 
   return 0;
 }

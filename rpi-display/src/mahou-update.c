@@ -38,6 +38,9 @@ update(state_st* state, adjScreens_st* adj_states)
       }
     }
   }
+
+  state->usb = USB_IDLE;
+
   return 1;
 }
 

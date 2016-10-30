@@ -1,5 +1,5 @@
 CC := gcc
-SRCDIR = src
+SRCDIR := src
 INCLUDE := include
 TARGET := magic
 
