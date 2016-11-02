@@ -8,6 +8,13 @@ import sdl2.ext
 RESOURCES = sdl2.ext.Resources(__file__, 'resources')
 SCREEN_WIDTH = 720  # 270
 SCREEN_HEIGHT = 1280  # 480
+PADDING = 40
+HR_WIDTH = 1
+
+FONT_COMP = {
+        120: [41, 33],
+        36: [12, 10],
+        }
 
 
 class SoftwareRenderer(sdl2.ext.SoftwareSpriteRenderSystem):
@@ -27,16 +34,44 @@ class TimeUpdater(sdl2.ext.Applicator):
     def __init__(self):
         super(TimeUpdater, self).__init__()
         self.componenttypes = (DynamicSprite, Clock,)
-        self.fontmanager = sdl2.ext.FontManager('resources/Roboto-Regular.ttf', size=100)
+        self.fontmanager = sdl2.ext.FontManager(
+                RESOURCES.get_path('Roboto-Regular.ttf'),
+#               bg_color=sdl2.ext.Color(255,0,0)
+                )
+        self.factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
 
     def process(self, world, componentsets):
         for ds, clock in componentsets:
-            if clock.update():
-                factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-                print('Replacing sprite')
+            if clock.update() or ds.is_new:
                 position = ds.sprite.position
-                ds.sprite = factory.from_text(
+                ds.is_new = False
+                ds.sprite = self.factory.from_text(
                         clock.get_time(),
+                        size = ds.text_size,
+                        fontmanager=self.fontmanager
+                        )
+                ds.sprite.position = position
+
+
+class DateUpdater(sdl2.ext.Applicator):
+
+    def __init__(self):
+        super(DateUpdater, self).__init__()
+        self.componenttypes = (DynamicSprite, Calendar,)
+        self.fontmanager = sdl2.ext.FontManager(
+                RESOURCES.get_path('Roboto-Regular.ttf'),
+#               bg_color=sdl2.ext.Color(255,0,0)
+                )
+        self.factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
+
+    def process(self, world, componentsets):
+        for ds, calendar in componentsets:
+            if calendar.update() or ds.is_new:
+                position = ds.sprite.position
+                ds.is_new = False
+                ds.sprite = self.factory.from_text(
+                        calendar.get_date(),
+                        size = ds.text_size,
                         fontmanager=self.fontmanager
                         )
                 ds.sprite.position = position
@@ -51,23 +86,19 @@ class StaticEntity(sdl2.ext.Entity):
         self.sprite.position = SCREEN_WIDTH*screenx+posx, SCREEN_HEIGHT*screeny+posy
 
 
-class DynamicEntity(sdl2.ext.Entity):
-
-    def __init__(self, world, posx=0, posy=0, screenx=0, screeny=0):
-        self.dynamicsprite = DynamicSprite()
-
-
 class ClockEntity(sdl2.ext.Entity):
 
-    def __init__(self, world, posx=0, posy=0, screenx=0, screeny=0):
+    def __init__(self, world, size=16, posx=0, posy=0, screenx=0, screeny=0):
         self.clock = Clock()
-        self.dynamicsprite = DynamicSprite()
-        fontmanager = sdl2.ext.FontManager('resources/Roboto-Regular.ttf', size=100)
-        factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-        self.dynamicsprite.sprite = factory.from_text(
-            self.clock.get_time(),
-            fontmanager=fontmanager
-            )
+        self.dynamicsprite = DynamicSprite(size)
+        self.dynamicsprite.sprite.position = SCREEN_WIDTH*screenx+posx, SCREEN_HEIGHT*screeny+posy
+
+
+class CalendarEntity(sdl2.ext.Entity):
+
+    def __init__(self, world, size=16, posx=0, posy=0, screenx=0, screeny=0):
+        self.calendar = Calendar()
+        self.dynamicsprite = DynamicSprite(size)
         self.dynamicsprite.sprite.position = SCREEN_WIDTH*screenx+posx, SCREEN_HEIGHT*screeny+posy
 
 
@@ -75,9 +106,11 @@ class ClockEntity(sdl2.ext.Entity):
 
 class DynamicSprite(sdl2.ext.Sprite):
 
-    def __init__(self):
+    def __init__(self, text_size=16):
         factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-        self.sprite = factory.from_color(sdl2.ext.Color(255,255,255), size=(10,10))
+        self.sprite = factory.from_color(sdl2.ext.Color(255,255,255), size=(1,1))
+        self.is_new = True
+        self.text_size = text_size
 
     @property
     def depth(self):
@@ -98,7 +131,24 @@ class Clock(object):
         return False
 
     def get_time(self):
-        return self.lastnow.strftime('%I:%M %p')
+        return self.lastnow.strftime('%I:%M %p').strip('0')
+
+
+class Calendar(object):
+
+    def __init__(self):
+        super(Calendar, self).__init__()
+        self.lastnow = datetime.datetime.now()
+
+    def update(self):
+        now = datetime.datetime.now()
+        if now.day - self.lastnow.day:
+            self.lastnow = now
+            return True
+        return False
+
+    def get_date(self):
+        return self.lastnow.strftime('%A, %B %d').upper()
 
 
 
@@ -115,24 +165,34 @@ def run():
     world.add_system(renderer)
 
     tu = TimeUpdater()
+    du = DateUpdater()
+
     world.add_system(tu)
+    world.add_system(du)
 
 
     factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
     fm = sdl2.ext.FontManager(RESOURCES.get_path('Roboto-Regular.ttf'), size=32)
-
-    usb_sprite = factory.from_color(sdl2.ext.Color(255,255,255), size=(120, 80))
-    usb = StaticEntity(world, usb_sprite, 20, 20)
-
-    water_sprite = factory.from_color(sdl2.ext.Color(255,255,255), size=(120, 80))
-    water = StaticEntity(world, water_sprite, SCREEN_WIDTH-water_sprite.size[0]-20, 20)
-
-    quote_sprite = factory.from_text('"This is a very long quote, and it should wrap when it gets too big for the screen but it probably won\'t."', fontmanager=fm, width=SCREEN_WIDTH-40)
-    quote = StaticEntity(world, quote_sprite, (SCREEN_WIDTH-quote_sprite.size[0])//2, SCREEN_HEIGHT-quote_sprite.size[1]-20)
+    usb_s = factory.from_color(sdl2.ext.Color(255,255,255), size=(120, 80))
+    water_s = factory.from_color(sdl2.ext.Color(255,255,255), size=(120, 80))
+    quote_s = factory.from_text('"This is a very long quote, and it should wrap when it gets too big for the screen but it probably won\'t."', fontmanager=fm, width=SCREEN_WIDTH-PADDING*2)
+    hr_s = factory.from_color(sdl2.ext.Color(255,255,255), size=(SCREEN_WIDTH-PADDING*2, HR_WIDTH))
 
 
-    c = ClockEntity(world, 150, 150)
+    usb = StaticEntity(world, usb_s, PADDING, PADDING)
+    water = StaticEntity(world, water_s, PADDING * 2 + usb_s.size[0], PADDING)
 
+    hr1 = StaticEntity(world, hr_s, PADDING, usb_s.y + usb_s.size[1] + PADDING)
+
+    clock = ClockEntity(world, 120, PADDING, hr_s.y + hr_s.size[1] + PADDING - FONT_COMP[120][0])
+    calendar = CalendarEntity(world, 36, PADDING, 300)
+
+    quote = StaticEntity(
+            world,
+            quote_s,
+            (SCREEN_WIDTH - quote_s.size[0]) // 2,
+            SCREEN_HEIGHT - quote_s.size[1] - PADDING
+            )
 
     running = True
     while running:
