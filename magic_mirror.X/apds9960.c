@@ -1,4 +1,5 @@
 #include "p24fj128ga010.h"
+#include "GenericTypeDefs.h"
 #include "apds9960.h"
 #include "stdbool.h"
 #include "stdlib.h"

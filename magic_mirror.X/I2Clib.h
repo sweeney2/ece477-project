@@ -9,7 +9,7 @@
 #define	I2CLIB_H
 
 #include "p24fj128ga010.h"
-#include <GenericTypeDefs.h>
+#include "GenericTypeDefs.h"
 
 //--------------------Constants--------------------
 #define I2C_M_ACK	0

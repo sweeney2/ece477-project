@@ -51,17 +51,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=apds9960.c
+SOURCEFILES_QUOTED_IF_SPACED=apds9960.c I2Clib.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/apds9960.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/apds9960.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/apds9960.o ${OBJECTDIR}/I2Clib.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/apds9960.o.d ${OBJECTDIR}/I2Clib.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/apds9960.o
+OBJECTFILES=${OBJECTDIR}/apds9960.o ${OBJECTDIR}/I2Clib.o
 
 # Source Files
-SOURCEFILES=apds9960.c
+SOURCEFILES=apds9960.c I2Clib.c
 
 
 CFLAGS=
@@ -95,6 +95,13 @@ ${OBJECTDIR}/apds9960.o: apds9960.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  apds9960.c  -o ${OBJECTDIR}/apds9960.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/apds9960.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_SIMULATOR=1    -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/apds9960.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/I2Clib.o: I2Clib.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/I2Clib.o.d 
+	@${RM} ${OBJECTDIR}/I2Clib.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  I2Clib.c  -o ${OBJECTDIR}/I2Clib.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/I2Clib.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_SIMULATOR=1    -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/I2Clib.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/apds9960.o: apds9960.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
@@ -102,6 +109,13 @@ ${OBJECTDIR}/apds9960.o: apds9960.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/apds9960.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  apds9960.c  -o ${OBJECTDIR}/apds9960.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/apds9960.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/apds9960.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/I2Clib.o: I2Clib.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/I2Clib.o.d 
+	@${RM} ${OBJECTDIR}/I2Clib.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  I2Clib.c  -o ${OBJECTDIR}/I2Clib.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/I2Clib.o.d"        -g -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/I2Clib.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 
