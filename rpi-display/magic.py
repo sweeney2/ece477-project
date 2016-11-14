@@ -9,13 +9,15 @@ RESOURCES = sdl2.ext.Resources(__file__, 'resources')
 SCREEN_WIDTH = 720  # 270
 SCREEN_HEIGHT = 1280  # 480
 HPADDING = 40
-VPADDING = 60
+VPADDING = 40
 HR_WIDTH = 1
 
 FONT_COMP = {
         120: [41, 33],
         36: [12, 10],
         }
+
+camera = [0.0, 0.0,]  # globals are fun and easy!
 
 
 class SoftwareRenderer(sdl2.ext.SoftwareSpriteRenderSystem):
@@ -26,7 +28,7 @@ class SoftwareRenderer(sdl2.ext.SoftwareSpriteRenderSystem):
 
     def render(self, components):
         sdl2.ext.fill(self.surface, sdl2.ext.Color(0, 0, 0))
-        super(SoftwareRenderer, self).render(self.expand_sprites(components))
+        super(SoftwareRenderer, self).render(self.expand_sprites(components), int(camera[0]), int(camera[1]))
 
     def expand_sprites(self, components):
         expanded = []
@@ -62,6 +64,21 @@ class TimeUpdater(sdl2.ext.Applicator):
                         fontmanager=self.fontmanager
                         )
                 ds.sprite.position = position
+
+
+class ScreenTweener(sdl2.ext.System):
+
+    def __init__(self):
+        super(ScreenTweener, self).__init__()
+        self.componenttypes = (CameraManager,)
+
+    def process(self, world, components):
+        if not components:
+            return
+        for c in components:
+            if not c.dead:
+                c.update_camera()
+                return
 
 
 class DateUpdater(sdl2.ext.Applicator):
@@ -123,49 +140,27 @@ class ArrowEntity(sdl2.ext.Entity):
         e = factory.from_text(e_text, fontmanager=fm)
         w = factory.from_text(w_text, fontmanager=fm)
         filename = 'dir_{}{}{}{}.bmp'.format(
-                'n' if n_text else '',
-                's' if s_text else '',
-                'e' if e_text else '',
-                'w' if w_text else ''
+                'n' if n_text.strip() else '',
+                's' if s_text.strip() else '',
+                'e' if e_text.strip() else '',
+                'w' if w_text.strip() else ''
                 )
         arrows = factory.from_image(RESOURCES.get_path(filename))
 
         self.spritegroup = SpriteGroup(
-                (
-                    arrows, (0, 0,),
-                    ),
-                (
-                    n,
-                    (
-                        arrows.size[0] // 2 - n.size[0] // 2,
-                        0 - n.size[1] - 0,
-                        ),
-                    ),
-                (
-                    s,
-                    (
-                        arrows.size[0] // 2 - s.size[0] // 2,
-                        0 + arrows.size[1] + 0,
-                        ),
-                    ),
-                (
-                    e,
-                    (
-                        0 + arrows.size[0] + 8,
-                        arrows.size[1] // 2 - e.size[1] // 2 - 0,
-                        ),
-                    ),
-                (
-                    w,
-                    (
-                        0 - w.size[0] - 8,
-                        arrows.size[1] // 2 - w.size[1] // 2 - 0,
-                        ),
-                    ),
+                (arrows, (SCREEN_WIDTH*screenx+0, 0,),),
+                (n, (SCREEN_WIDTH*screenx+ (arrows.size[0] // 2 - n.size[0] // 2), SCREEN_HEIGHT*screeny+(0 - n.size[1] - 0),),),
+                (s, (SCREEN_WIDTH*screenx+ (arrows.size[0] // 2 - s.size[0] // 2), SCREEN_HEIGHT*screeny+(0 + arrows.size[1] + 0),),),
+                (e, (SCREEN_WIDTH*screenx+ (arrows.size[0] + 8), SCREEN_HEIGHT*screeny+(arrows.size[1] // 2 - e.size[1] // 2 - 0),),),
+                (w, (SCREEN_WIDTH*screenx+ (0 - w.size[0] - 8), SCREEN_HEIGHT*screeny+(arrows.size[1] // 2 - w.size[1] // 2 - 0),),),
                 )
         self.spritegroup.set_pos(posx, posy)
 
 
+class ScreenCameraEntity(sdl2.ext.Entity):
+
+    def __init__(self, world, direction):
+        self.cameramanager = CameraManager(direction)
 
 
 # Helper classes
@@ -201,6 +196,51 @@ class SpriteGroup(sdl2.ext.Sprite):
                     )
 
 
+class CameraManager(object):
+
+    def __init__(self, direction):
+        super(CameraManager, self).__init__()
+        self.direction = direction
+        self.target = None
+        if direction == 'up':
+            self.target = camera[1] + SCREEN_HEIGHT
+        if direction == 'down':
+            self.target = camera[1] - SCREEN_HEIGHT
+        if direction == 'left':
+            self.target = camera[0] + SCREEN_WIDTH
+        if direction == 'right':
+            self.target = camera[0] - SCREEN_WIDTH
+        self.scale = 0.00002
+        self.base = 1
+        self.thresh = 1
+        self.dead = False
+
+    def update_camera(self):
+        diff_x = abs(camera[0]) % SCREEN_WIDTH
+        diff_y = abs(camera[1]) % SCREEN_HEIGHT
+        rate_x = diff_x * (SCREEN_WIDTH - diff_x) * self.scale + self.base
+        rate_y = diff_y * (SCREEN_HEIGHT - diff_y) * self.scale + self.base
+
+        if self.direction == 'up':
+            camera[1] += rate_y
+            if abs(self.target - camera[1]) < self.thresh:
+                camera[1] = self.target
+                self.dead = True
+        if self.direction == 'down':
+            camera[1] -= rate_y
+            if abs(self.target - camera[1]) < self.thresh:
+                camera[1] = self.target
+                self.dead = True
+        if self.direction == 'left':
+            camera[0] += rate_x
+            if abs(self.target - camera[0]) < self.thresh:
+                camera[0] = self.target
+                self.dead = True
+        if self.direction == 'right':
+            camera[0] -= rate_x
+            if abs(self.target - camera[0]) < self.thresh:
+                camera[0] = self.target
+                self.dead = True
 
 
 class Clock(object):
@@ -252,43 +292,71 @@ def run():
 
     tu = TimeUpdater()
     du = DateUpdater()
+    st = ScreenTweener()
 
     world.add_system(tu)
     world.add_system(du)
+    world.add_system(st)
 
 
     factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
     fm = sdl2.ext.FontManager(RESOURCES.get_path('Roboto-Regular.ttf'), size=32)
-    usb_s = factory.from_color(sdl2.ext.Color(255,255,255), size=(120, 80))
-    water_s = factory.from_color(sdl2.ext.Color(255,255,255), size=(120, 80))
-    quote_s = factory.from_text('"This is a very long quote, and it should wrap when it gets too big for the screen but it probably won\'t."', fontmanager=fm, width=SCREEN_WIDTH-HPADDING*2)
+    usb_s = factory.from_image(RESOURCES.get_path('usb.bmp'))
+    water_s = factory.from_image(RESOURCES.get_path('water.bmp'))
+    light_s = factory.from_image(RESOURCES.get_path('light.bmp'))
+    images_s = factory.from_image(RESOURCES.get_path('images.bmp'))
+    usb_s_ = factory.from_image(RESOURCES.get_path('usb.bmp'))
+    water_s_ = factory.from_image(RESOURCES.get_path('water.bmp'))
+    light_s_ = factory.from_image(RESOURCES.get_path('light.bmp'))
+    images_s_ = factory.from_image(RESOURCES.get_path('images.bmp'))
     hr_s = factory.from_color(sdl2.ext.Color(255,255,255), size=(SCREEN_WIDTH-HPADDING*2, HR_WIDTH))
 
 
     usb = StaticEntity(world, usb_s, HPADDING, VPADDING)
-    water = StaticEntity(world, water_s, HPADDING * 2 + usb_s.size[0], VPADDING)
+    water = StaticEntity(world, water_s, HPADDING + usb_s.position[0] + usb_s.size[0], VPADDING)
+    light = StaticEntity(world, light_s, HPADDING + water_s.position[0] + water_s.size[0], VPADDING)
+    images = StaticEntity(world, images_s, HPADDING + light_s.position[0] + light_s.size[0], VPADDING)
+    usb = StaticEntity(world, usb_s_, HPADDING, VPADDING, 1, 0)
+    water = StaticEntity(world, water_s_, HPADDING + usb_s.position[0] + usb_s.size[0], VPADDING, 1, 0)
+    light = StaticEntity(world, light_s_, HPADDING + water_s.position[0] + water_s.size[0], VPADDING, 1, 0)
+    images = StaticEntity(world, images_s_, HPADDING + light_s.position[0] + light_s.size[0], VPADDING, 1, 0)
 
     hr1 = StaticEntity(world, hr_s, HPADDING, usb_s.y + usb_s.size[1] + VPADDING)
 
-    clock = ClockEntity(world, 120, HPADDING, hr_s.y + hr_s.size[1] + VPADDING - FONT_COMP[120][0])
+    clock = ClockEntity(world, 120, HPADDING, hr_s.y + hr_s.size[1] + VPADDING * 2 - FONT_COMP[120][0])
     calendar = CalendarEntity(world, 36, HPADDING, clock.dynamicsprite.sprite.y + FONT_COMP[120][0] + VPADDING + 85 - FONT_COMP[36][1])
-    home_arrow = ArrowEntity(world, 'Photo', 'Lights', 'Water', 'Timer', (SCREEN_WIDTH - 120) // 2, 600)
+    home_arrow = ArrowEntity(world, 'Photo', 'Lights', 'Water', 'Timer', (SCREEN_WIDTH - 120) // 2, SCREEN_HEIGHT - 200)
+    graph_arrow_day = ArrowEntity(world, 'Weekly', ' ', ' ', 'Home', (SCREEN_WIDTH - 120) // 2, SCREEN_HEIGHT - 200, 1, 0)
 
+    camera_entity = None
 
-    quote = StaticEntity(
-            world,
-            quote_s,
-            (SCREEN_WIDTH - quote_s.size[0]) // 2,
-            SCREEN_HEIGHT - quote_s.size[1] - VPADDING
-            )
 
     running = True
     while running:
+        if camera_entity and camera_entity.cameramanager.dead:
+            world.delete(camera_entity)
+            camera_entity = None
         events = sdl2.ext.get_events()
         for event in events:
             if event.type == sdl2.SDL_QUIT:
                 running = False
                 break
+            if event.type == sdl2.SDL_KEYUP:
+                if event.key.keysym.sym == sdl2.SDLK_q:
+                    running = False
+                    break
+                if event.key.keysym.sym == sdl2.SDLK_UP:
+                    if not camera_entity:
+                        camera_entity = ScreenCameraEntity(world, 'up')
+                if event.key.keysym.sym == sdl2.SDLK_DOWN:
+                    if not camera_entity:
+                        camera_entity = ScreenCameraEntity(world, 'down')
+                if event.key.keysym.sym == sdl2.SDLK_LEFT:
+                    if not camera_entity:
+                        camera_entity = ScreenCameraEntity(world, 'left')
+                if event.key.keysym.sym == sdl2.SDLK_RIGHT:
+                    if not camera_entity:
+                        camera_entity = ScreenCameraEntity(world, 'right')
         world.process()
     sdl2.ext.quit()
 
