@@ -222,22 +222,22 @@ class CameraManager(object):
         rate_y = diff_y * (SCREEN_HEIGHT - diff_y) * self.scale + self.base
 
         if self.direction == 'up':
-            camera[1] += rate_y
+            camera[1] = self.target  # += rate_y
             if abs(self.target - camera[1]) < self.thresh:
                 camera[1] = self.target
                 self.dead = True
         if self.direction == 'down':
-            camera[1] -= rate_y
+            camera[1] = self.target  # -= rate_y
             if abs(self.target - camera[1]) < self.thresh:
                 camera[1] = self.target
                 self.dead = True
         if self.direction == 'left':
-            camera[0] += rate_x
+            camera[0] = self.target  # += rate_x
             if abs(self.target - camera[0]) < self.thresh:
                 camera[0] = self.target
                 self.dead = True
         if self.direction == 'right':
-            camera[0] -= rate_x
+            camera[0] = self.target  # -= rate_x
             if abs(self.target - camera[0]) < self.thresh:
                 camera[0] = self.target
                 self.dead = True

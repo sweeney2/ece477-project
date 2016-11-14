@@ -8,7 +8,7 @@ import sys
 
 
 DEVICE_NAMES = ('sda', 'sdb', 'sdc', 'sdd',)
-IMAGE_DIR = '/home/pi/magic-mirror-images'
+IMAGE_DIR = '/home/alarm/magic-mirror-images'
 
 for message in sys.stdin:
 
