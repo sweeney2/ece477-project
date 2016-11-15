@@ -8,22 +8,12 @@ import android.bluetooth.le.ScanResult;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Button;
 
 import java.util.ArrayList;
 
 
 public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
-
-    @Override
-    protected Void doInBackground(Boolean... params) {
-        scanLeDevice(params[0]);
-        return null;
-    }
-
-    @Override
-    protected void onPostExecute (Void result){
-        update.listResults(mLeDevices);
-    }
 
     public BluetoothAdapter mBluetoothAdapter;
     private final BluetoothLeScanner scanner;
@@ -35,8 +25,7 @@ public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
     protected MainActivity context;
     public UpdateUiElements update;
 
-    // Stops scanning after 10 seconds.
-    private static final long SCAN_PERIOD = 40000;
+    private static final long SCAN_PERIOD = 15000;
 
     public DeviceScan (BluetoothAdapter bluetooth, MainActivity view) {
         mBluetoothAdapter = bluetooth;
@@ -46,6 +35,28 @@ public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
         scanner = bluetooth.getBluetoothLeScanner();
         context = view;
         update = new UpdateUiElements(view);
+    }
+
+    @Override
+    protected void onPreExecute () {
+        update.listResults(mLeDevices);
+        update.statusMessage = R.string.bluetooth_scanning;
+        update.updateStatusMessage();
+    }
+
+    @Override
+    protected Void doInBackground(Boolean... params) {
+        scanLeDevice(params[0]);
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute (Void result){
+        update.statusMessage = R.string.bluetooth_results;
+        update.updateStatusMessage();
+        Log.d("BluetoothScan", "Scan Done");
+        update.listResults(mLeDevices);
+        context.button.setEnabled(true);
     }
 
     public void scanLeDevice(final boolean enable) {
@@ -62,8 +73,6 @@ public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
             }, SCAN_PERIOD);
             mScanning = true;
             Log.d("BluetoothScan", "StartScan");
-            update.statusMessage = R.string.bluetooth_scanning;
-            update.updateStatusMessage();
             scanner.startScan(mLeScanCallback);
             synchronized(sync) {
                 while(mScanning) {
@@ -90,9 +99,11 @@ public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             Log.d("Result", "ResultFound");
-            if(!mLeDevices.contains(result.getDevice())) {
+            if((!mLeDevices.contains(result.getDevice())) && (result.getDevice().getName() != null)) {
                 mLeDevices.add(result.getDevice());
                 Log.d("Added", result.getDevice().getName());
+
+                update.listResults(mLeDevices);
             }
         }
     };
