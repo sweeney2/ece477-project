@@ -1,8 +1,0 @@
-<resources>
-    <string name="app_name">Magic Mirror</string>
-    <string name="button_send">Scan</string>
-    <string name="bluetooth_enabled">Bluetooth Enabled</string>
-    <string name="bluetooth_disabled">Bluetooth Disabled</string>
-    <string name="bluetooth_scanning">Scanning...</string>
-    <string name="bluetooth_results">Scan Results</string>
-</resources>
