@@ -1,8 +1,18 @@
 <resources>
     <string name="app_name">Magic Mirror</string>
     <string name="button_send">Scan</string>
+    <string name="button_connect">Connect</string>
+    <string name="button_disconnect">Disconnect</string>
+    <string name="bluetooth_info">Bluetooth Info</string>
+    <string name="bluetooth_name">Name:</string>
+    <string name="bluetooth_address">Address:</string>
+    <string name="bluetooth_status">Connection Status:</string>
     <string name="bluetooth_enabled">Bluetooth Enabled</string>
     <string name="bluetooth_disabled">Bluetooth Disabled</string>
     <string name="bluetooth_scanning">Scanning...</string>
     <string name="bluetooth_results">Scan Results</string>
+    <string name="bluetooth_connected">Connected</string>
+    <string name="bluetooth_disconnected">Disconnected</string>
+    <string name="bluetooth_connecting">Connecting...</string>
+
 </resources>

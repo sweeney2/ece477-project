@@ -12,7 +12,7 @@
 
 
     <TextView
-        android:text="Bluetooth Info"
+        android:text="@string/bluetooth_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -22,25 +22,25 @@
         android:textAppearance="@android:style/TextAppearance.Material.Title" />
 
     <Button
-        android:text="Connect"
+        android:text="@string/button_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/button2"
+        android:id="@+id/connect"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:onClick="connectBluetoothLE"/>
 
     <TextView
-        android:text="Name:"
+        android:text="@string/bluetooth_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView2"
         android:textAppearance="@android:style/TextAppearance.Material.Medium"
-        android:layout_below="@+id/button2"
+        android:layout_below="@+id/connect"
         android:layout_alignParentStart="true"
         android:layout_marginTop="25dp" />
 
     <TextView
-        android:text="TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/name_val"
@@ -48,7 +48,7 @@
         android:layout_alignStart="@+id/address_val" />
 
     <TextView
-        android:text="Address:"
+        android:text="@string/bluetooth_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView10"
@@ -58,7 +58,7 @@
         android:layout_alignParentStart="true" />
 
     <TextView
-        android:text="UUIDs:"
+        android:text="@string/bluetooth_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView9"
@@ -68,7 +68,6 @@
         android:layout_alignParentStart="true" />
 
     <TextView
-        android:text="TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/address_val"
@@ -76,11 +75,11 @@
         android:layout_toEndOf="@+id/textView10"
         android:layout_marginStart="52dp" />
 
-    <ListView
-        android:id="@+id/uuid_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/textView9"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="24dp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/textView9"
+        android:layout_toStartOf="@+id/connect"
+        android:id="@+id/status" />
+
 </RelativeLayout>

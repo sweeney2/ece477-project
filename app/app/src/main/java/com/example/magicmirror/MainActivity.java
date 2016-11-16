@@ -33,26 +33,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        button = (Button) findViewById(R.id.button);
+        button = (Button) findViewById(R.id.scan);
         listview = (ListView) findViewById(R.id.list);
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long x){
                 BluetoothDevice btDevice = (BluetoothDevice) adapter.getItemAtPosition(position);
-
-                ArrayList<String> UUIDs = new ArrayList<String>();
-
-                if (btDevice.getUuids() != null) {
-                    for (ParcelUuid Uuid : btDevice.getUuids()) {
-                        UUIDs.add(Uuid.toString());
-                        Log.d("Parcel", Uuid.toString());
-                    }
-                }
-                else {
-                    UUIDs.add(0, "No UUIDs Found");
-                    Log.d("Parcel", "No UUIDs");
-                }
 
                 Intent intent = new Intent(MainActivity.this, BluetoothInfoActivity.class);
                 if (btDevice.getName() != null) {
@@ -69,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
                     intent.putExtra("btDeviceAddress", "Unknown");
                 }
 
-                intent.putStringArrayListExtra("btDeviceUUIDs", UUIDs);
+                intent.putExtra("btDevice", btDevice);
                 startActivity(intent);
             }
         });
@@ -118,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
                 // permission denied
                 permissionGranted = false;
             }
-            return;
         }
     }
 
