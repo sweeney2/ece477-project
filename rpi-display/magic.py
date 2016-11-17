@@ -47,6 +47,12 @@ class Screen(Enum):
     timer_1 = 10
     timer_2 = 11
 
+class State(Enum):
+    usb = 1
+    water = 2
+    light = 3
+    images = 4
+
 SCREEN_INFO = {
         Screen.home: {
             'up': {
@@ -182,6 +188,12 @@ SCREEN_INFO = {
 
 # globals are fun, and useful!
 current_screen = Screen.home
+current_state = {
+        State.usb: False,
+        State.water: False,
+        State.light: False,
+        State.images: False,
+        }
 
 
 
@@ -203,12 +215,15 @@ class EnableUpdater(sdl2.ext.Applicator):
 
     def __init__(self):
         super(EnableUpdater, self).__init__()
-        self.componenttypes = (EnableSprite, ScreenSet,)
+        self.componenttypes = (EnableSprite, ItemSet,)
 
     def process(self, world, componentsets):
-        global current_screen
-        for sprite, screen_set in componentsets:
-            sprite.enabled = current_screen in screen_set.screens
+        global current_screen, current_state
+        for sprite, item_set in componentsets:
+            if type(item_set) is ScreenSet:
+                sprite.enabled = current_screen in item_set.items
+            if type(item_set) is StateSet:
+                sprite.enabled = any([current_state[s] for s in item_set.items])
 
 
 class TimeUpdater(sdl2.ext.Applicator):
@@ -273,15 +288,15 @@ class ScreenEntity(sdl2.ext.Entity):
     def __init__(self, world, sprite, *screens, posx=0, posy=0):
         self.enablesprite = sprite
         self.sprite.position = (posx, posy,)
-        self.screenset = ScreenSet(list(screens))
+        self.itemset = ScreenSet(list(screens))
 
 
-##  class StateEntity(sdl2.ext.Entity):
-##
-##      def __init__(self, sprite, *states, posx=0, posy=0):
-##          self.sprite = sprite
-##          self.sprite.position = (posx, posy,)
-##          self.stateset = StateSet(states)
+class StateEntity(sdl2.ext.Entity):
+
+    def __init__(self, world, sprite, *states, posx=0, posy=0):
+        self.enablesprite = sprite
+        self.sprite.position = (posx, posy,)
+        self.itemset = StateSet(list(states))
 
 
 class ClockEntity(sdl2.ext.Entity):
@@ -298,33 +313,6 @@ class CalendarEntity(sdl2.ext.Entity):
         self.calendar = Calendar()
         self.dynamicsprite = DynamicSprite(size)
         self.dynamicsprite.sprite.position = SCREEN_WIDTH*screenx+posx, SCREEN_HEIGHT*screeny+posy
-
-
-##  class ArrowEntity(sdl2.ext.Entity):
-##
-##      def __init__(self, world, n_text, s_text, e_text, w_text, posx=0, posy=0, screenx=0, screeny=0):
-##          factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-##          fm = sdl2.ext.FontManager(RESOURCES.get_path('Roboto-Regular.ttf'), size=24)
-##          n = factory.from_text(n_text, fontmanager=fm)
-##          s = factory.from_text(s_text, fontmanager=fm)
-##          e = factory.from_text(e_text, fontmanager=fm)
-##          w = factory.from_text(w_text, fontmanager=fm)
-##          filename = 'dir_{}{}{}{}.bmp'.format(
-##                  'n' if n_text.strip() else '',
-##                  's' if s_text.strip() else '',
-##                  'e' if e_text.strip() else '',
-##                  'w' if w_text.strip() else ''
-##                  )
-##          arrows = factory.from_image(RESOURCES.get_path(filename))
-##
-##          self.spritegroup = SpriteGroup(
-##                  (arrows, (SCREEN_WIDTH*screenx+0, 0,),),
-##                  (n, (SCREEN_WIDTH*screenx+ (arrows.size[0] // 2 - n.size[0] // 2), SCREEN_HEIGHT*screeny+(0 - n.size[1] - 0),),),
-##                  (s, (SCREEN_WIDTH*screenx+ (arrows.size[0] // 2 - s.size[0] // 2), SCREEN_HEIGHT*screeny+(0 + arrows.size[1] + 0),),),
-##                  (e, (SCREEN_WIDTH*screenx+ (arrows.size[0] + 8), SCREEN_HEIGHT*screeny+(arrows.size[1] // 2 - e.size[1] // 2 - 0),),),
-##                  (w, (SCREEN_WIDTH*screenx+ (0 - w.size[0] - 8), SCREEN_HEIGHT*screeny+(arrows.size[1] // 2 - w.size[1] // 2 - 0),),),
-##                  )
-##          self.spritegroup.set_pos(posx, posy)
 
 
 # Helper classes
@@ -349,23 +337,22 @@ class DynamicSprite(EnableSprite):
         return self.sprite.depth
 
 
-# try not to use this.........
-class SpriteGroup(sdl2.ext.Sprite):
-
-    def __init__(self, *sprite_info):
-        self.sprites = [s[0] for s in sprite_info]
-        self.positions = [p[1] for p in sprite_info]
-
-    @property
-    def depth(self):
-        return self.sprites[0].depth if self.sprites else 0
-
-    def set_pos(self, posx, posy):
-        for i in range(len(self.sprites)):
-            self.sprites[i].position = (
-                    posx + self.positions[i][0],
-                    posy + self.positions[i][1],
-                    )
+##  class SpriteGroup(sdl2.ext.Sprite):
+##
+##      def __init__(self, *sprite_info):
+##          self.sprites = [s[0] for s in sprite_info]
+##          self.positions = [p[1] for p in sprite_info]
+##
+##      @property
+##      def depth(self):
+##          return self.sprites[0].depth if self.sprites else 0
+##
+##      def set_pos(self, posx, posy):
+##          for i in range(len(self.sprites)):
+##              self.sprites[i].position = (
+##                      posx + self.positions[i][0],
+##                      posy + self.positions[i][1],
+##                      )
 
 
 class Clock(object):
@@ -402,11 +389,23 @@ class Calendar(object):
         return self.lastnow.strftime('%A, %B %d').upper()
 
 
-class ScreenSet(object):
+class ItemSet(object):
 
-    def __init__(self, screens):
-        super(ScreenSet, self).__init__()
-        self.screens = screens
+    def __init__(self, items):
+        super(ItemSet, self).__init__()
+        self.items = items
+
+
+class ScreenSet(ItemSet):
+
+    def __init__(self, items):
+        super(ScreenSet, self).__init__(items)
+
+
+class StateSet(ItemSet):
+
+    def __init__(self, items):
+        super(StateSet, self).__init__(items)
 
 
 # Convenience functions
@@ -420,7 +419,8 @@ def to_enable_sprite(sprite):
 # Main loop
 
 def run():
-    global current_screen
+
+    global current_screen, current_state
 
     sdl2.ext.init()
     window = sdl2.ext.Window('Magic Mirror', size=(SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -457,10 +457,15 @@ def run():
 
 
     entities = {}
-    entities['usb']     = StaticEntity(world, sprites['usb'],       HPADDING,           VPADDING)
-    entities['water']   = StaticEntity(world, sprites['water'],     HPADDING * 2 + 80,  VPADDING)
-    entities['light']   = StaticEntity(world, sprites['light'],     HPADDING * 3 + 160, VPADDING)
-    entities['images']  = StaticEntity(world, sprites['images'],    HPADDING * 4 + 240, VPADDING)
+    entities['usb']     = StateEntity(world, sprites['usb'],    posx=HPADDING,           posy=VPADDING)
+    entities['water']   = StateEntity(world, sprites['water'],  posx=HPADDING * 2 + 80,  posy=VPADDING)
+    entities['light']   = StateEntity(world, sprites['light'],  posx=HPADDING * 3 + 160, posy=VPADDING)
+    entities['images']  = StateEntity(world, sprites['images'], posx=HPADDING * 4 + 240, posy=VPADDING)
+
+    entities['usb'   ].stateset.items = [State.usb,]
+    entities['water' ].stateset.items = [State.water,]
+    entities['light' ].stateset.items = [State.light,]
+    entities['images'].stateset.items = [State.images,]
 
     entities['arrow_center'] = StaticEntity(world, sprites['arrow_center'], (SCREEN_WIDTH - 70) // 2, SCREEN_HEIGHT - 800)
     entities['arrow_u_f'] = ScreenEntity(world, sprites['arrow_u_f'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]-25)
@@ -473,14 +478,14 @@ def run():
     entities['arrow_r_e'] = ScreenEntity(world, sprites['arrow_r_e'], posx=sprites['arrow_center'].position[0]+70, posy=sprites['arrow_center'].position[1]   )
 
     for screen in Screen:
-        entities['arrow_u_f'].screenset.screens += [screen,] if SCREEN_INFO[screen]['up'   ]['screen'] is not screen else []
-        entities['arrow_u_e'].screenset.screens += [screen,] if SCREEN_INFO[screen]['up'   ]['screen'] is     screen else []
-        entities['arrow_d_f'].screenset.screens += [screen,] if SCREEN_INFO[screen]['down' ]['screen'] is not screen else []
-        entities['arrow_d_e'].screenset.screens += [screen,] if SCREEN_INFO[screen]['down' ]['screen'] is     screen else []
-        entities['arrow_l_f'].screenset.screens += [screen,] if SCREEN_INFO[screen]['left' ]['screen'] is not screen else []
-        entities['arrow_l_e'].screenset.screens += [screen,] if SCREEN_INFO[screen]['left' ]['screen'] is     screen else []
-        entities['arrow_r_f'].screenset.screens += [screen,] if SCREEN_INFO[screen]['right']['screen'] is not screen else []
-        entities['arrow_r_e'].screenset.screens += [screen,] if SCREEN_INFO[screen]['right']['screen'] is     screen else []
+        entities['arrow_u_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['up'   ]['screen'] is not screen else []
+        entities['arrow_u_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['up'   ]['screen'] is     screen else []
+        entities['arrow_d_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['down' ]['screen'] is not screen else []
+        entities['arrow_d_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['down' ]['screen'] is     screen else []
+        entities['arrow_l_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['left' ]['screen'] is not screen else []
+        entities['arrow_l_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['left' ]['screen'] is     screen else []
+        entities['arrow_r_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['right']['screen'] is not screen else []
+        entities['arrow_r_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['right']['screen'] is     screen else []
 
 #   clock = ClockEntity(world, 120, HPADDING, hr_s.y + hr_s.size[1] + VPADDING * 2 - FONT_COMP[120][0])
 #   calendar = CalendarEntity(world, 36, HPADDING, clock.dynamicsprite.sprite.y + FONT_COMP[120][0] + VPADDING + 85 - FONT_COMP[36][1])
@@ -499,6 +504,14 @@ def run():
                 if event.key.keysym.sym == sdl2.SDLK_q:
                     running = False
                     break
+                if event.key.keysym.sym == sdl2.SDLK_a:
+                    current_state[State.usb] = not current_state[State.usb]
+                if event.key.keysym.sym == sdl2.SDLK_s:
+                    current_state[State.water] = not current_state[State.water]
+                if event.key.keysym.sym == sdl2.SDLK_d:
+                    current_state[State.light] = not current_state[State.light]
+                if event.key.keysym.sym == sdl2.SDLK_f:
+                    current_state[State.images] = not current_state[State.images]
                 if event.key.keysym.sym == sdl2.SDLK_UP:
                     current_screen = SCREEN_INFO[current_screen]['up'   ]['screen']
                 if event.key.keysym.sym == sdl2.SDLK_DOWN:
