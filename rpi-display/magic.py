@@ -208,7 +208,15 @@ class SoftwareRenderer(sdl2.ext.SoftwareSpriteRenderSystem):
         super(SoftwareRenderer, self).render(self.select_sprites(components))
 
     def select_sprites(self, components):
-        return [s for s in components if s.enabled]
+        result = []
+        for s in components:
+            if not s.enabled:
+                continue
+            if type(s) is DynamicSprite:
+                result.append(s.sprite)
+            else:
+                result.append(s)
+        return result
 
 
 class EnableUpdater(sdl2.ext.Applicator):
@@ -301,18 +309,20 @@ class StateEntity(sdl2.ext.Entity):
 
 class ClockEntity(sdl2.ext.Entity):
 
-    def __init__(self, world, size=16, posx=0, posy=0, screenx=0, screeny=0):
+    def __init__(self, world, *screens, size=16, posx=0, posy=0):
         self.clock = Clock()
         self.dynamicsprite = DynamicSprite(size)
-        self.dynamicsprite.sprite.position = SCREEN_WIDTH*screenx+posx, SCREEN_HEIGHT*screeny+posy
+        self.dynamicsprite.sprite.position = posx, posy
+        self.itemset = ScreenSet(list(screens))
 
 
 class CalendarEntity(sdl2.ext.Entity):
 
-    def __init__(self, world, size=16, posx=0, posy=0, screenx=0, screeny=0):
+    def __init__(self, world, *screens, size=16, posx=0, posy=0):
         self.calendar = Calendar()
         self.dynamicsprite = DynamicSprite(size)
-        self.dynamicsprite.sprite.position = SCREEN_WIDTH*screenx+posx, SCREEN_HEIGHT*screeny+posy
+        self.dynamicsprite.sprite.position = posx, posy
+        self.itemset = ScreenSet(list(screens))
 
 
 # Helper classes
@@ -326,11 +336,12 @@ class EnableSprite(sdl2.ext.Sprite):
 
 class DynamicSprite(EnableSprite):
 
-    def __init__(self, text_size=16):
+    def __init__(self, text_size=16, enabled=True):
         factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
         self.sprite = factory.from_color(sdl2.ext.Color(255,255,255), size=(1,1))
         self.is_new = True
         self.text_size = text_size
+        self.enabled = enabled
 
     @property
     def depth(self):
@@ -416,6 +427,17 @@ def to_enable_sprite(sprite):
     return sprite
 
 
+def arrow_pos(size, direction):
+    if direction == 'up':
+        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-840-size[1]
+    if direction == 'down':
+        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-690
+    if direction == 'left':
+        return SCREEN_WIDTH//2-80-size[0], SCREEN_HEIGHT-760-size[1]//2
+    if direction == 'right':
+        return SCREEN_WIDTH//2+80, SCREEN_HEIGHT-760-size[1]//2
+
+
 # Main loop
 
 def run():
@@ -435,10 +457,10 @@ def run():
     enable_updater = EnableUpdater()
     world.add_system(enable_updater)
 
-#   tu = TimeUpdater()
+    tu = TimeUpdater()
 #   du = DateUpdater()
 
-#   world.add_system(tu)
+    world.add_system(tu)
 #   world.add_system(du)
 
 
@@ -487,10 +509,22 @@ def run():
         entities['arrow_r_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['right']['screen'] is not screen else []
         entities['arrow_r_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['right']['screen'] is     screen else []
 
-#   clock = ClockEntity(world, 120, HPADDING, hr_s.y + hr_s.size[1] + VPADDING * 2 - FONT_COMP[120][0])
-#   calendar = CalendarEntity(world, 36, HPADDING, clock.dynamicsprite.sprite.y + FONT_COMP[120][0] + VPADDING + 85 - FONT_COMP[36][1])
-#   home_arrow = ArrowEntity(world, 'Photo', 'Lights', 'Water', 'Timer', (SCREEN_WIDTH - 120) // 2, SCREEN_HEIGHT - 200)
-#   graph_arrow_day = ArrowEntity(world, 'Weekly', ' ', ' ', 'Home', (SCREEN_WIDTH - 120) // 2, SCREEN_HEIGHT - 200, 1, 0)
+    for screen in Screen:
+        for dir_ in ('up', 'down', 'left', 'right',):
+            if not SCREEN_INFO[screen][dir_]['text']:
+                continue
+            s = factory.from_text(SCREEN_INFO[screen][dir_]['text'], size=32, fontmanager=fm)
+            x, y = arrow_pos(s.size, dir_)
+            e = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
+            e.itemset.items += [screen,]
+
+    print(s.enabled)
+
+    entities['clock'] = ClockEntity(world, size=120, posx=10, posy=10)
+    entities['calendar'] = CalendarEntity(world, size=36, posx=10, posy=200)
+
+    entities['clock'].screenset.items = [Screen.home]
+    entities['calendar'].screenset.items = [Screen.home]
 
 
     running = True
