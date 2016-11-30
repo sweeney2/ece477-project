@@ -58,7 +58,7 @@ class State(Enum):
 SCREEN_INFO = {
         Screen.home: {
             'up': {
-                'screen': Screen.camera_0,
+                'screen': Screen.camera_1,
                 'text': 'Camera',
                 },
             'down': {
@@ -298,26 +298,41 @@ class TimerUpdater(sdl2.ext.Applicator):
         global current_screen
         for ds, timer in componentsets:
             # handle state
-            if current_screen == Screen.timer_1:
-                if timer.is_done():
-                    current_screen = Screen.timer_2
-                elif not timer.running:
-                    timer.restart()
-            elif current_screen == Screen.timer_2:
-                pass
-            else:
-                timer.reset()
-                ds.is_new = True
+            if timer.duration == 120:
+                if current_screen == Screen.timer_1:
+                    if timer.is_done():
+                        current_screen = Screen.timer_2
+                    elif not timer.running:
+                        timer.restart()
+                elif current_screen == Screen.timer_2:
+                    pass
+                else:
+                    timer.reset()
+                    ds.is_new = True
+            elif timer.duration == 5:
+                if current_screen == Screen.camera_1:
+                    if timer.is_done():
+                        current_screen = Screen.camera_2
+                    elif not timer.running:
+                        timer.restart()
+                elif current_screen == Screen.camera_2:
+                    pass
+                else:
+                    timer.reset()
+                    ds.is_new = True
             # handle update
             if timer.update() or ds.is_new:
+                if timer.duration == 5 and not timer.time_left:
+                    print('photo')
+                    break
                 position = ds.sprite.position
                 ds.is_new = False
                 ds.sprite = self.factory.from_text(
-                        timer.get_time_left(),
+                        str(timer.time_left) if timer.duration < 60 else timer.get_time_left(),
                         size = ds.text_size,
                         fontmanager=self.fontmanager
                         )
-                ds.sprite.position = position
+                ds.sprite.position = (SCREEN_WIDTH-ds.sprite.size[0])//2, position[1]
 
 
 # Entities
@@ -365,8 +380,8 @@ class CalendarEntity(sdl2.ext.Entity):
 
 class TimerEntity(sdl2.ext.Entity):
 
-    def __init__(self, world, *screens, size=16, posx=0, posy=0):
-        self.timer = Timer()
+    def __init__(self, world, time, *screens, size=16, posx=0, posy=0):
+        self.timer = Timer(time)
         self.dynamicsprite = DynamicSprite(size)
         self.dynamicsprite.sprite.position = posx, posy
         self.itemset = ScreenSet(list(screens))
@@ -431,17 +446,18 @@ class Calendar(object):
 
 class Timer(object):
 
-    def __init__(self):
+    def __init__(self, duration):
         super(Timer, self).__init__()
+        self.duration = duration
         self.reset()
 
     def restart(self):
-        self.target = time.time() + 120
+        self.target = time.time() + self.duration
         self.lastdiff = self.target - time.time()
         self.running = True
 
     def reset(self):
-        self.time_left = 120
+        self.time_left = self.duration
         self.running = False
 
     def is_done(self):
@@ -566,14 +582,14 @@ def run():
     entities['arrow_r_e'] = ScreenEntity(world, sprites['arrow_r_e'], posx=sprites['arrow_center'].position[0]+70, posy=sprites['arrow_center'].position[1]   )
 
     for screen in Screen:
-        entities['arrow_u_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['up'   ]['screen'] is not screen else []
-        entities['arrow_u_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['up'   ]['screen'] is     screen else []
-        entities['arrow_d_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['down' ]['screen'] is not screen else []
-        entities['arrow_d_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['down' ]['screen'] is     screen else []
-        entities['arrow_l_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['left' ]['screen'] is not screen else []
-        entities['arrow_l_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['left' ]['screen'] is     screen else []
-        entities['arrow_r_f'].screenset.items += [screen,] if SCREEN_INFO[screen]['right']['screen'] is not screen else []
-        entities['arrow_r_e'].screenset.items += [screen,] if SCREEN_INFO[screen]['right']['screen'] is     screen else []
+        entities['arrow_u_f'].screenset.items += [screen,] if     SCREEN_INFO[screen]['up'   ]['text'] else []
+        entities['arrow_u_e'].screenset.items += [screen,] if not SCREEN_INFO[screen]['up'   ]['text'] else []
+        entities['arrow_d_f'].screenset.items += [screen,] if     SCREEN_INFO[screen]['down' ]['text'] else []
+        entities['arrow_d_e'].screenset.items += [screen,] if not SCREEN_INFO[screen]['down' ]['text'] else []
+        entities['arrow_l_f'].screenset.items += [screen,] if     SCREEN_INFO[screen]['left' ]['text'] else []
+        entities['arrow_l_e'].screenset.items += [screen,] if not SCREEN_INFO[screen]['left' ]['text'] else []
+        entities['arrow_r_f'].screenset.items += [screen,] if     SCREEN_INFO[screen]['right']['text'] else []
+        entities['arrow_r_e'].screenset.items += [screen,] if not SCREEN_INFO[screen]['right']['text'] else []
 
     for screen in Screen:
         for dir_ in ('up', 'down', 'left', 'right',):
@@ -584,13 +600,27 @@ def run():
             e = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
             e.itemset.items += [screen,]
 
-    entities['clock'] = ClockEntity(world, size=120, posx=10, posy=10)
-    entities['calendar'] = CalendarEntity(world, size=36, posx=10, posy=200)
-    entities['timer'] = TimerEntity(world, size=120, posx=10, posy=10)
+    entities['clock'] = ClockEntity(world, size=120, posx=40, posy=200)
+    entities['calendar'] = CalendarEntity(world, size=36, posx=40, posy=360)
+    entities['tb_timer'] = TimerEntity(world, 120, size=120, posx=10, posy=500)
+    entities['cam_timer'] = TimerEntity(world, 5, size=240, posx=0, posy=300)
 
     entities['clock'].screenset.items = [Screen.home]
     entities['calendar'].screenset.items = [Screen.home]
-    entities['timer'].screenset.items = [Screen.timer_0, Screen.timer_1, Screen.timer_2]
+    entities['tb_timer'].screenset.items = [Screen.timer_0, Screen.timer_1, Screen.timer_2]
+    entities['cam_timer'].screenset.items = [Screen.camera_0, Screen.camera_1]
+
+    # Text entities
+    s = factory.from_text('Taking photo in...', size=48, fontmanager=fm)
+    (x, y) = ((SCREEN_WIDTH-s.size[0])//2, 240)
+    entities['cam_timer_1'] = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
+    entities['cam_timer_1'].itemset.items += [Screen.camera_1,]
+
+    s = factory.from_text('Photo taken!', size=48, fontmanager=fm)
+    (x, y) = ((SCREEN_WIDTH-s.size[0])//2, 420)
+    entities['cam_timer_2'] = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
+    entities['cam_timer_2'].itemset.items += [Screen.camera_2,]
+
 
 
     running = True
@@ -609,12 +639,13 @@ def run():
                 if event.key.keysym.sym == sdl2.SDLK_s:
                     current_state[State.water] = not current_state[State.water]
                 if event.key.keysym.sym == sdl2.SDLK_d:
-                    current_state[State.light] = not current_state[State.light]
-                if event.key.keysym.sym == sdl2.SDLK_f:
                     current_state[State.images] = not current_state[State.images]
                 if event.key.keysym.sym == sdl2.SDLK_UP:
                     current_screen = SCREEN_INFO[current_screen]['up'   ]['screen']
                 if event.key.keysym.sym == sdl2.SDLK_DOWN:
+                    if current_screen == Screen.home:
+                        print('lights')
+                        current_state[State.light] = not current_state[State.light]
                     current_screen = SCREEN_INFO[current_screen]['down' ]['screen']
                 if event.key.keysym.sym == sdl2.SDLK_LEFT:
                     current_screen = SCREEN_INFO[current_screen]['left' ]['screen']
