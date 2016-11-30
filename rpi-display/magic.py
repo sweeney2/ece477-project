@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 import datetime
+import math
 import sys
 import sdl2
 import sdl2.ext
+import time
 from enum import Enum
 
 RESOURCES = sdl2.ext.Resources(__file__, 'resources')
@@ -282,6 +284,42 @@ class DateUpdater(sdl2.ext.Applicator):
                 ds.sprite.position = position
 
 
+class TimerUpdater(sdl2.ext.Applicator):
+
+    def __init__(self):
+        super(TimerUpdater, self).__init__()
+        self.componenttypes = (DynamicSprite, Timer,)
+        self.fontmanager = sdl2.ext.FontManager(
+                RESOURCES.get_path('Roboto-Regular.ttf'),
+                )
+        self.factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
+
+    def process(self, world, componentsets):
+        global current_screen
+        for ds, timer in componentsets:
+            # handle state
+            if current_screen == Screen.timer_1:
+                if timer.is_done():
+                    current_screen = Screen.timer_2
+                elif not timer.running:
+                    timer.restart()
+            elif current_screen == Screen.timer_2:
+                pass
+            else:
+                timer.reset()
+                ds.is_new = True
+            # handle update
+            if timer.update() or ds.is_new:
+                position = ds.sprite.position
+                ds.is_new = False
+                ds.sprite = self.factory.from_text(
+                        timer.get_time_left(),
+                        size = ds.text_size,
+                        fontmanager=self.fontmanager
+                        )
+                ds.sprite.position = position
+
+
 # Entities
 
 class StaticEntity(sdl2.ext.Entity):
@@ -325,6 +363,15 @@ class CalendarEntity(sdl2.ext.Entity):
         self.itemset = ScreenSet(list(screens))
 
 
+class TimerEntity(sdl2.ext.Entity):
+
+    def __init__(self, world, *screens, size=16, posx=0, posy=0):
+        self.timer = Timer()
+        self.dynamicsprite = DynamicSprite(size)
+        self.dynamicsprite.sprite.position = posx, posy
+        self.itemset = ScreenSet(list(screens))
+
+
 # Helper classes
 
 class EnableSprite(sdl2.ext.Sprite):
@@ -346,24 +393,6 @@ class DynamicSprite(EnableSprite):
     @property
     def depth(self):
         return self.sprite.depth
-
-
-##  class SpriteGroup(sdl2.ext.Sprite):
-##
-##      def __init__(self, *sprite_info):
-##          self.sprites = [s[0] for s in sprite_info]
-##          self.positions = [p[1] for p in sprite_info]
-##
-##      @property
-##      def depth(self):
-##          return self.sprites[0].depth if self.sprites else 0
-##
-##      def set_pos(self, posx, posy):
-##          for i in range(len(self.sprites)):
-##              self.sprites[i].position = (
-##                      posx + self.positions[i][0],
-##                      posy + self.positions[i][1],
-##                      )
 
 
 class Clock(object):
@@ -398,6 +427,41 @@ class Calendar(object):
 
     def get_date(self):
         return self.lastnow.strftime('%A, %B %d').upper()
+
+
+class Timer(object):
+
+    def __init__(self):
+        super(Timer, self).__init__()
+        self.reset()
+
+    def restart(self):
+        self.target = time.time() + 120
+        self.lastdiff = self.target - time.time()
+        self.running = True
+
+    def reset(self):
+        self.time_left = 120
+        self.running = False
+
+    def is_done(self):
+        return not self.time_left
+
+    def update(self):
+        if self.running:
+            now = time.time()
+            if self.target < now:
+                self.time_left = 0
+                self.running = False
+                return True
+            elif int(self.lastdiff) - int(self.target - now):
+                self.lastdiff = self.target - now
+                self.time_left = math.ceil(self.target - now)
+                return True
+        return False
+
+    def get_time_left(self):
+        return '{:1d}:{:02d}'.format(self.time_left//60, self.time_left%60)
 
 
 class ItemSet(object):
@@ -458,10 +522,12 @@ def run():
     world.add_system(enable_updater)
 
     tu = TimeUpdater()
-#   du = DateUpdater()
+    du = DateUpdater()
+    ttu = TimerUpdater()
 
     world.add_system(tu)
-#   world.add_system(du)
+    world.add_system(du)
+    world.add_system(ttu)
 
 
     factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
@@ -518,13 +584,13 @@ def run():
             e = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
             e.itemset.items += [screen,]
 
-    print(s.enabled)
-
     entities['clock'] = ClockEntity(world, size=120, posx=10, posy=10)
     entities['calendar'] = CalendarEntity(world, size=36, posx=10, posy=200)
+    entities['timer'] = TimerEntity(world, size=120, posx=10, posy=10)
 
     entities['clock'].screenset.items = [Screen.home]
     entities['calendar'].screenset.items = [Screen.home]
+    entities['timer'].screenset.items = [Screen.timer_0, Screen.timer_1, Screen.timer_2]
 
 
     running = True
