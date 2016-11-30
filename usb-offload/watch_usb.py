@@ -21,15 +21,13 @@ for message in sys.stdin:
     device = device.split('/')[-1]
     desc = desc[1:-1]
 
-    if not desc == 'block':
+    if desc != 'block':
         continue
-
-    print('Event:  {:8s}Time:   {:24s}Action: {:8s}Device: {:8s}Type:   {:8s}'.format(event, time, action, device, desc))
 
     if action != 'add':
         continue
 
-    print('usb-transfer-begin')
+    print('usb-in')
 
     dev_dir = '/dev/{}'.format(device)
     mnt_dir = '/mnt/{}'.format(device)
@@ -40,5 +38,5 @@ for message in sys.stdin:
     subprocess.call(['sudo', 'umount', mnt_dir])
     subprocess.call(['sudo', 'rmdir', '/mnt/{}'.format(device)])
 
-    print('usb-transfer-end')
+    print('usb-out')
 
