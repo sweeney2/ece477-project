@@ -7,7 +7,10 @@
       <itemPath>apds9960.h</itemPath>
       <itemPath>I2Clib.h</itemPath>
       <itemPath>GenericTypeDefs.h</itemPath>
-      <itemPath>Delay.h</itemPath>
+      <itemPath>lcd.h</itemPath>
+      <itemPath>timers.h</itemPath>
+      <itemPath>uart.h</itemPath>
+      <itemPath>definitions.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -18,6 +21,10 @@
                    projectFiles="true">
       <itemPath>apds9960.c</itemPath>
       <itemPath>I2Clib.c</itemPath>
+      <itemPath>lcd.c</itemPath>
+      <itemPath>timers.c</itemPath>
+      <itemPath>uart.c</itemPath>
+      <itemPath>main.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -25,6 +32,9 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>../../Downloads</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="default" type="2">

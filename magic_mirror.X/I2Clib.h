@@ -8,7 +8,6 @@
 #ifndef I2CLIB_H
 #define	I2CLIB_H
 
-#include "p24fj128ga010.h"
 #include "GenericTypeDefs.h"
 
 //--------------------Constants--------------------

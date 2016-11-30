@@ -22,9 +22,9 @@
 //Periodically call I2C1_M_Poll() to verify device is still working.
 
 #include <xc.h>
-#include <GenericTypeDefs.h>
-#include "Delay.h"											//From Microchip\Include\TCPIP_Stack
+#include "GenericTypeDefs.h"
 #include "I2Clib.h"
+#include "timers.h"
 
 //-------------------Variables-------------------
 WORD I2Cflags;
@@ -98,7 +98,7 @@ int I2C1_M_BusReset()
 	LATGbits.LATG2 = 1;										//PORTGbits.RG2 = 1 is equivalent
 	LATGbits.LATG3 = 1;
 
-	Delay10us(1);											//Need 5uS delay
+	Wait1us(5);											//Need 5uS delay
 	if(PORTGbits.RG2 == 0)									//Read if line actually went high
 	{
 		return 1;											//SCL stuck low - is the pullup resistor loaded?
@@ -112,9 +112,9 @@ int I2C1_M_BusReset()
 			break;
 		}
 		LATGbits.LATG2 = 0;									//SCL low
-		Delay10us(1);										//Need 5uS delay
+		Wait1us(5);										//Need 5uS delay
 		LATGbits.LATG2 = 1;									//SCL high
-		Delay10us(1);										//Need 5uS delay
+		Wait1us(5);										//Need 5uS delay
 		i--;
 	}
 	if((PORTG & 0x000C) != 0x000C)							//We are ok if SCL and SDA high
@@ -123,9 +123,9 @@ int I2C1_M_BusReset()
 	}
 
 	LATGbits.LATG3 = 0;										//SDA LOW while SCL HIGH -> START
-	Delay10us(1);											//Need 5uS delay
+	Wait1us(5);											//Need 5uS delay
 	LATGbits.LATG3 = 1;										//SDA HIGH while SCL HIGH -> STOP
-	Delay10us(1);											//Need 5uS delay
+	Wait1us(5);											//Need 5uS delay
 	return 0;
 }
 
@@ -501,7 +501,7 @@ void I2C1_M_Write(BYTE DevAddr, BYTE SubAddr, int ByteCnt, char *buffer)
 
 	if(I2C1_M_Start() != 0)									//Start
 	{//Failed to open bus
-		SetI2C1BusDirty;
+		SetI2C1BusDirty;   
 		return;
 	}
 

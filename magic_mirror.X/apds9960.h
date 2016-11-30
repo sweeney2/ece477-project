@@ -8,8 +8,14 @@
 #ifndef APDS9960_H
 #define	APDS9960_H
 
-#include "stdbool.h"
 #include "p24fj128ga010.h"
+#include "GenericTypeDefs.h"
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "I2Clib.h"
+#include "timers.h"
+#include "lcd.h"
 /* Debug */
 #define DEBUG                   0
 
@@ -195,10 +201,6 @@ enum {
   ALL_STATE
 };
 
-/*Method for delaying by passing milliseconds*/
-void delay(unsigned int mseconds);
-
-
 /* Container for gesture data */
 typedef struct gesture_data_type {
     unsigned char u_data[32];
@@ -226,6 +228,9 @@ typedef struct gesture_data_type {
     bool enableGestureSensor(bool interrupts);
     bool disableGestureSensor();
     
+    
+    //INITIALIZE APDS9960
+    bool init();
     /* LED drive strength control */
     unsigned char getLEDDrive();
     bool setLEDDrive(unsigned char drive);
@@ -316,7 +321,7 @@ typedef struct gesture_data_type {
     bool wireWriteByte(unsigned char val);
     bool wireWriteDataByte(unsigned char reg, unsigned char val);
     bool wireWriteDataBlock(unsigned char reg, unsigned char *val, unsigned int len);
-    bool wireReadDataByte(unsigned char reg, unsigned char val);
+    bool wireReadDataByte(unsigned char reg, unsigned char *val);
     int wireReadDataBlock(unsigned char reg, unsigned char *val, unsigned int len);
 
     /* Members */

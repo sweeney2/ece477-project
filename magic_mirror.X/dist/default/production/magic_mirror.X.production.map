@@ -1,0 +1,54 @@
+Microchip Technology Inc, v1.26 (A)
+
+Tool Name:
+  /Applications/microchip/xc16/v1.26/bin/bin/../bin/elf-ld
+
+Command:
+  -p24FJ128GA010 \
+  -o \
+  dist/default/production/magic_mirror.X.production.elf \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/.. \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../lib \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/PIC24E/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/PIC24F/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/PIC24H/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/dsPIC30F/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/dsPIC33E/gld \
+  -L/Applications/microchip/xc16/v1.26/bin/bin/../../support/dsPIC33F/gld \
+  build/default/production/apds9960.o \
+  build/default/production/I2Clib.o \
+  build/default/production/lcd.o \
+  build/default/production/timers.o \
+  build/default/production/uart.o \
+  build/default/production/main.o \
+  --defsym=__MPLAB_BUILD=1 \
+  -Tp24FJ128GA010.gld.00 \
+  --stack=16 \
+  --check-sections \
+  --data-init \
+  --pack-data \
+  --handles \
+  --isr \
+  --no-gc-sections \
+  --fill-upper=0 \
+  --stackguard=16 \
+  --no-force-link \
+  --smart-io \
+  -Map=dist/default/production/magic_mirror.X.production.map \
+  --report-mem \
+  --memorysummary \
+  dist/default/production/memoryfile.xml \
+  -start-group \
+  --library=lega-pic30-elf \
+  --library=m-elf \
+  --library=lega-c-elf \
+  -end-group \
+
+
+Optional library libpPIC24Fxxx.a not found
+Archive member included because of file (symbol)
+
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o)
+                              (__resetPRI)
+/Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(data_init_standard.o)
+                              /Applications/microchip/xc16/v1.26/bin/bin/../../lib/liblega-pic30-elf.a(crt0_standard.o) (__data_init_standard)

@@ -1,21 +1,13 @@
-#include "p24fj128ga010.h"
-#include "GenericTypeDefs.h"
 #include "apds9960.h"
-#include "stdbool.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "time.h"
-
-
-void delay(unsigned int mseconds)
+/**
+ * @brief Configures I2C communications and initializes registers to defaults
+ *
+ * @return True if initialized successfully. False otherwise.
+ */
+bool init()
 {
-    clock_t goal = mseconds + clock();
-    while (goal > clock());
-}
-
-
-APDS9960::APDS9960()
-{
+    unsigned char id;
+    
     gesture_ud_delta_ = 0;
     gesture_lr_delta_ = 0;
 
@@ -27,23 +19,14 @@ APDS9960::APDS9960()
 
     gesture_state_ = 0;
     gesture_motion_ = DIR_NONE;
-}
-
-
-/**
- * @brief Configures I2C communications and initializes registers to defaults
- *
- * @return True if initialized successfully. False otherwise.
- */
-bool init()
-{
-    unsigned char id;
 
     /* Initialize I2C */
-    Wire.begin();
+    //Wire.begin();
+    I2C_SWini();
+    I2C_HWini();
 
     /* Read ID register and check against known values for APDS-9960 */
-    if( !wireReadDataByte(APDS9960_ID, id) ) {
+    if( !wireReadDataByte(APDS9960_ID, &id) ) {
         return false;
     }
     if( !(id == APDS9960_ID_1 || id == APDS9960_ID_2) ) {
@@ -190,7 +173,7 @@ unsigned char getMode()
     unsigned char enable_value;
 
     /* Read current ENABLE register */
-    if( !wireReadDataByte(APDS9960_ENABLE, enable_value) ) {
+    if( !wireReadDataByte(APDS9960_ENABLE, &enable_value) ) {
         return ERROR;
     }
 
@@ -234,7 +217,6 @@ bool setMode(unsigned char mode, unsigned char enable)
     if( !wireWriteDataByte(APDS9960_ENABLE, reg_val) ) {
         return false;
     }
-
     return true;
 }
 
@@ -423,7 +405,7 @@ bool isGestureAvailable()
     unsigned char val;
 
     /* Read value from GSTATUS register */
-    if( !wireReadDataByte(APDS9960_GSTATUS, val) ) {
+    if( !wireReadDataByte(APDS9960_GSTATUS, &val) ) {
         return ERROR;
     }
 
@@ -461,10 +443,10 @@ int readGesture()
     while(1) {
 
         /* Wait some time to collect next batch of FIFO data */
-        delay(FIFO_PAUSE_TIME);
+        Wait1ms(FIFO_PAUSE_TIME);
 
         /* Get the contents of the STATUS register. Is data still valid? */
-        if( !wireReadDataByte(APDS9960_GSTATUS, gstatus) ) {
+        if( !wireReadDataByte(APDS9960_GSTATUS, &gstatus) ) {
             return ERROR;
         }
 
@@ -472,7 +454,7 @@ int readGesture()
         if( (gstatus & APDS9960_GVALID) == APDS9960_GVALID ) {
 
             /* Read the current FIFO level */
-            if( !wireReadDataByte(APDS9960_GFLVL, fifo_level) ) {
+            if( !wireReadDataByte(APDS9960_GFLVL, &fifo_level) ) {
                 return ERROR;
             }
 
@@ -540,7 +522,7 @@ int readGesture()
         } else {
 
             /* Determine best guessed gesture and clean up */
-            delay(FIFO_PAUSE_TIME);
+            Wait1ms(FIFO_PAUSE_TIME);
             decodeGesture();
             motion = gesture_motion_;
 #if DEBUG
@@ -597,13 +579,13 @@ bool readAmbientLight(unsigned int val)
     val = 0;
 
     /* Read value from clear channel, low byte register */
-    if( !wireReadDataByte(APDS9960_CDATAL, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_CDATAL, &val_byte) ) {
         return false;
     }
     val = val_byte;
 
     /* Read value from clear channel, high byte register */
-    if( !wireReadDataByte(APDS9960_CDATAH, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_CDATAH, &val_byte) ) {
         return false;
     }
     val = val + ((unsigned int)val_byte << 8);
@@ -623,13 +605,13 @@ bool readRedLight(unsigned int val)
     val = 0;
 
     /* Read value from clear channel, low byte register */
-    if( !wireReadDataByte(APDS9960_RDATAL, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_RDATAL, &val_byte) ) {
         return false;
     }
     val = val_byte;
 
     /* Read value from clear channel, high byte register */
-    if( !wireReadDataByte(APDS9960_RDATAH, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_RDATAH, &val_byte) ) {
         return false;
     }
     val = val + ((unsigned int)val_byte << 8);
@@ -649,13 +631,13 @@ bool readGreenLight(unsigned int val)
     val = 0;
 
     /* Read value from clear channel, low byte register */
-    if( !wireReadDataByte(APDS9960_GDATAL, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_GDATAL, &val_byte) ) {
         return false;
     }
     val = val_byte;
 
     /* Read value from clear channel, high byte register */
-    if( !wireReadDataByte(APDS9960_GDATAH, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_GDATAH, &val_byte) ) {
         return false;
     }
     val = val + ((unsigned int)val_byte << 8);
@@ -675,13 +657,13 @@ bool readBlueLight(unsigned int val)
     val = 0;
 
     /* Read value from clear channel, low byte register */
-    if( !wireReadDataByte(APDS9960_BDATAL, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_BDATAL, &val_byte) ) {
         return false;
     }
     val = val_byte;
 
     /* Read value from clear channel, high byte register */
-    if( !wireReadDataByte(APDS9960_BDATAH, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_BDATAH, &val_byte) ) {
         return false;
     }
     val = val + ((unsigned int)val_byte << 8);
@@ -704,7 +686,7 @@ bool readProximity(unsigned char val)
     val = 0;
 
     /* Read value from proximity data register */
-    if( !wireReadDataByte(APDS9960_PDATA, val) ) {
+    if( !wireReadDataByte(APDS9960_PDATA, &val) ) {
         return false;
     }
 
@@ -1008,7 +990,7 @@ unsigned char getProxIntLowThresh()
     unsigned char val;
 
     /* Read value from PILT register */
-    if( !wireReadDataByte(APDS9960_PILT, val) ) {
+    if( !wireReadDataByte(APDS9960_PILT, &val) ) {
         val = 0;
     }
 
@@ -1040,7 +1022,7 @@ unsigned char getProxIntHighThresh()
     unsigned char val;
 
     /* Read value from PIHT register */
-    if( !wireReadDataByte(APDS9960_PIHT, val) ) {
+    if( !wireReadDataByte(APDS9960_PIHT, &val) ) {
         val = 0;
     }
 
@@ -1078,7 +1060,7 @@ unsigned char getLEDDrive()
     unsigned char val;
 
     /* Read value from CONTROL register */
-    if( !wireReadDataByte(APDS9960_CONTROL, val) ) {
+    if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
         return ERROR;
     }
 
@@ -1105,7 +1087,7 @@ bool setLEDDrive(unsigned char drive)
     unsigned char val;
 
     /* Read value from CONTROL register */
-    if( !wireReadDataByte(APDS9960_CONTROL, val) ) {
+    if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
         return false;
     }
 
@@ -1139,7 +1121,7 @@ unsigned char getProximityGain()
     unsigned char val;
 
     /* Read value from CONTROL register */
-    if( !wireReadDataByte(APDS9960_CONTROL, val) ) {
+    if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
         return ERROR;
     }
 
@@ -1166,7 +1148,7 @@ bool setProximityGain(unsigned char drive)
     unsigned char val;
 
     /* Read value from CONTROL register */
-    if( !wireReadDataByte(APDS9960_CONTROL, val) ) {
+    if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
         return false;
     }
 
@@ -1200,7 +1182,7 @@ unsigned char getAmbientLightGain()
     unsigned char val;
 
     /* Read value from CONTROL register */
-    if( !wireReadDataByte(APDS9960_CONTROL, val) ) {
+    if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
         return ERROR;
     }
 
@@ -1227,7 +1209,7 @@ bool setAmbientLightGain(unsigned char drive)
     unsigned char val;
 
     /* Read value from CONTROL register */
-    if( !wireReadDataByte(APDS9960_CONTROL, val) ) {
+    if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
         return false;
     }
 
@@ -1260,7 +1242,7 @@ unsigned char getLEDBoost()
     unsigned char val;
 
     /* Read value from CONFIG2 register */
-    if( !wireReadDataByte(APDS9960_CONFIG2, val) ) {
+    if( !wireReadDataByte(APDS9960_CONFIG2, &val) ) {
         return ERROR;
     }
 
@@ -1287,7 +1269,7 @@ bool setLEDBoost(unsigned char boost)
     unsigned char val;
 
     /* Read value from CONFIG2 register */
-    if( !wireReadDataByte(APDS9960_CONFIG2, val) ) {
+    if( !wireReadDataByte(APDS9960_CONFIG2, &val) ) {
         return false;
     }
 
@@ -1315,7 +1297,7 @@ unsigned char getProxGainCompEnable()
     unsigned char val;
 
     /* Read value from CONFIG3 register */
-    if( !wireReadDataByte(APDS9960_CONFIG3, val) ) {
+    if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
         return ERROR;
     }
 
@@ -1336,7 +1318,7 @@ unsigned char getProxGainCompEnable()
     unsigned char val;
 
     /* Read value from CONFIG3 register */
-    if( !wireReadDataByte(APDS9960_CONFIG3, val) ) {
+    if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
         return false;
     }
 
@@ -1371,7 +1353,7 @@ unsigned char getProxPhotoMask()
     unsigned char val;
 
     /* Read value from CONFIG3 register */
-    if( !wireReadDataByte(APDS9960_CONFIG3, val) ) {
+    if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
         return ERROR;
     }
 
@@ -1399,7 +1381,7 @@ bool setProxPhotoMask(unsigned char mask)
     unsigned char val;
 
     /* Read value from CONFIG3 register */
-    if( !wireReadDataByte(APDS9960_CONFIG3, val) ) {
+    if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
         return false;
     }
 
@@ -1426,7 +1408,7 @@ unsigned char getGestureEnterThresh()
     unsigned char val;
 
     /* Read value from GPENTH register */
-    if( !wireReadDataByte(APDS9960_GPENTH, val) ) {
+    if( !wireReadDataByte(APDS9960_GPENTH, &val) ) {
         val = 0;
     }
 
@@ -1458,7 +1440,7 @@ unsigned char getGestureExitThresh()
     unsigned char val;
 
     /* Read value from GEXTH register */
-    if( !wireReadDataByte(APDS9960_GEXTH, val) ) {
+    if( !wireReadDataByte(APDS9960_GEXTH, &val) ) {
         val = 0;
     }
 
@@ -1496,7 +1478,7 @@ unsigned char getGestureGain()
     unsigned char val;
 
     /* Read value from GCONF2 register */
-    if( !wireReadDataByte(APDS9960_GCONF2, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
         return ERROR;
     }
 
@@ -1523,7 +1505,7 @@ bool setGestureGain(unsigned char gain)
     unsigned char val;
 
     /* Read value from GCONF2 register */
-    if( !wireReadDataByte(APDS9960_GCONF2, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
         return false;
     }
 
@@ -1557,7 +1539,7 @@ unsigned char getGestureLEDDrive()
     unsigned char val;
 
     /* Read value from GCONF2 register */
-    if( !wireReadDataByte(APDS9960_GCONF2, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
         return ERROR;
     }
 
@@ -1584,7 +1566,7 @@ bool setGestureLEDDrive(unsigned char drive)
     unsigned char val;
 
     /* Read value from GCONF2 register */
-    if( !wireReadDataByte(APDS9960_GCONF2, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
         return false;
     }
 
@@ -1622,7 +1604,7 @@ unsigned char getGestureWaitTime()
     unsigned char val;
 
     /* Read value from GCONF2 register */
-    if( !wireReadDataByte(APDS9960_GCONF2, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
         return ERROR;
     }
 
@@ -1653,7 +1635,7 @@ bool setGestureWaitTime(unsigned char time)
     unsigned char val;
 
     /* Read value from GCONF2 register */
-    if( !wireReadDataByte(APDS9960_GCONF2, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
         return false;
     }
 
@@ -1682,13 +1664,13 @@ bool getLightIntLowThreshold(unsigned int threshold)
     threshold = 0;
 
     /* Read value from ambient light low threshold, low byte register */
-    if( !wireReadDataByte(APDS9960_AILTL, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_AILTL, &val_byte) ) {
         return false;
     }
     threshold = val_byte;
 
     /* Read value from ambient light low threshold, high byte register */
-    if( !wireReadDataByte(APDS9960_AILTH, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_AILTH, &val_byte) ) {
         return false;
     }
     threshold = threshold + ((unsigned int)val_byte << 8);
@@ -1736,13 +1718,13 @@ bool getLightIntHighThreshold(unsigned int threshold)
     threshold = 0;
 
     /* Read value from ambient light high threshold, low byte register */
-    if( !wireReadDataByte(APDS9960_AIHTL, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_AIHTL, &val_byte) ) {
         return false;
     }
     threshold = val_byte;
 
     /* Read value from ambient light high threshold, high byte register */
-    if( !wireReadDataByte(APDS9960_AIHTH, val_byte) ) {
+    if( !wireReadDataByte(APDS9960_AIHTH, &val_byte) ) {
         return false;
     }
     threshold = threshold + ((unsigned int)val_byte << 8);
@@ -1789,7 +1771,7 @@ bool getProximityIntLowThreshold(unsigned char threshold)
     threshold = 0;
 
     /* Read value from proximity low threshold register */
-    if( !wireReadDataByte(APDS9960_PILT, threshold) ) {
+    if( !wireReadDataByte(APDS9960_PILT, &threshold) ) {
         return false;
     }
 
@@ -1824,7 +1806,7 @@ bool getProximityIntHighThreshold(unsigned char threshold)
     threshold = 0;
 
     /* Read value from proximity low threshold register */
-    if( !wireReadDataByte(APDS9960_PIHT, threshold) ) {
+    if( !wireReadDataByte(APDS9960_PIHT, &threshold) ) {
         return false;
     }
 
@@ -1858,7 +1840,7 @@ unsigned char getAmbientLightIntEnable()
     unsigned char val;
 
     /* Read value from ENABLE register */
-    if( !wireReadDataByte(APDS9960_ENABLE, val) ) {
+    if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
         return ERROR;
     }
 
@@ -1879,7 +1861,7 @@ bool setAmbientLightIntEnable(unsigned char enable)
     unsigned char val;
 
     /* Read value from ENABLE register */
-    if( !wireReadDataByte(APDS9960_ENABLE, val) ) {
+    if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
         return false;
     }
 
@@ -1907,7 +1889,7 @@ unsigned char getProximityIntEnable()
     unsigned char val;
 
     /* Read value from ENABLE register */
-    if( !wireReadDataByte(APDS9960_ENABLE, val) ) {
+    if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
         return ERROR;
     }
 
@@ -1928,7 +1910,7 @@ bool setProximityIntEnable(unsigned char enable)
     unsigned char val;
 
     /* Read value from ENABLE register */
-    if( !wireReadDataByte(APDS9960_ENABLE, val) ) {
+    if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
         return false;
     }
 
@@ -1956,7 +1938,7 @@ unsigned char getGestureIntEnable()
     unsigned char val;
 
     /* Read value from GCONF4 register */
-    if( !wireReadDataByte(APDS9960_GCONF4, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
         return ERROR;
     }
 
@@ -1977,7 +1959,7 @@ bool setGestureIntEnable(unsigned char enable)
     unsigned char val;
 
     /* Read value from GCONF4 register */
-    if( !wireReadDataByte(APDS9960_GCONF4, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
         return false;
     }
 
@@ -2003,7 +1985,7 @@ bool setGestureIntEnable(unsigned char enable)
 bool clearAmbientLightInt()
 {
     unsigned char throwaway;
-    if( !wireReadDataByte(APDS9960_AICLEAR, throwaway) ) {
+    if( !wireReadDataByte(APDS9960_AICLEAR, &throwaway) ) {
         return false;
     }
 
@@ -2018,7 +2000,7 @@ bool clearAmbientLightInt()
 bool clearProximityInt()
 {
     unsigned char throwaway;
-    if( !wireReadDataByte(APDS9960_PICLEAR, throwaway) ) {
+    if( !wireReadDataByte(APDS9960_PICLEAR, &throwaway) ) {
         return false;
     }
 
@@ -2035,7 +2017,7 @@ unsigned char getGestureMode()
     unsigned char val;
 
     /* Read value from GCONF4 register */
-    if( !wireReadDataByte(APDS9960_GCONF4, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
         return ERROR;
     }
 
@@ -2056,7 +2038,7 @@ bool setGestureMode(unsigned char mode)
     unsigned char val;
 
     /* Read value from GCONF4 register */
-    if( !wireReadDataByte(APDS9960_GCONF4, val) ) {
+    if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
         return false;
     }
 
@@ -2085,12 +2067,14 @@ bool setGestureMode(unsigned char mode)
  */
 bool wireWriteByte(unsigned char val)
 {
+    //NEED FIXING
+    /*
     Wire.beginTransmission(APDS9960_I2C_ADDR);
     Wire.write(val);
     if( Wire.endTransmission() != 0 ) {
         return false;
     }
-
+    */
     return true;
 }
 
@@ -2103,13 +2087,15 @@ bool wireWriteByte(unsigned char val)
  */
 bool wireWriteDataByte(unsigned char reg, unsigned char val)
 {
+    //NEED FIXING
+    /*
     Wire.beginTransmission(APDS9960_I2C_ADDR);
     Wire.write(reg);
     Wire.write(val);
     if( Wire.endTransmission() != 0 ) {
         return false;
     }
-
+    */
     return true;
 }
 
@@ -2127,6 +2113,8 @@ bool wireWriteDataBlock(  unsigned char reg,
 {
     unsigned int i;
 
+    //NEED FIXING
+    /*
     Wire.beginTransmission(APDS9960_I2C_ADDR);
     Wire.write(reg);
     for(i = 0; i < len; i++) {
@@ -2135,7 +2123,7 @@ bool wireWriteDataBlock(  unsigned char reg,
     if( Wire.endTransmission() != 0 ) {
         return false;
     }
-
+    */
     return true;
 }
 
@@ -2146,7 +2134,7 @@ bool wireWriteDataBlock(  unsigned char reg,
  * @param[out] the value returned from the register
  * @return True if successful read operation. False otherwise.
  */
-bool wireReadDataByte(unsigned char reg, unsigned char val)
+bool wireReadDataByte(unsigned char reg, unsigned char *val)
 {
 
     /* Indicate which register we want to read from */
@@ -2155,11 +2143,13 @@ bool wireReadDataByte(unsigned char reg, unsigned char val)
     }
 
     /* Read from register */
+    //NEED FIXING
+    /*
     Wire.requestFrom(APDS9960_I2C_ADDR, 1);
     while (Wire.available()) {
         val = Wire.read();
     }
-
+    */
     return true;
 }
 
@@ -2183,6 +2173,8 @@ int wireReadDataBlock(   unsigned char reg,
     }
 
     /* Read block data */
+    //NEED FIXING
+    /*
     Wire.requestFrom(APDS9960_I2C_ADDR, len);
     while (Wire.available()) {
         if (i >= len) {
@@ -2191,6 +2183,6 @@ int wireReadDataBlock(   unsigned char reg,
         val[i] = Wire.read();
         i++;
     }
-
+     */
     return i;
 }
