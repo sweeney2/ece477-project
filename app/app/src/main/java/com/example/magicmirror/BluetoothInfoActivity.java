@@ -4,7 +4,10 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -22,6 +26,7 @@ public class BluetoothInfoActivity extends AppCompatActivity {
     public BluetoothDevice btDevice;
     public int connectionstatus  = R.string.bluetooth_disconnected;
     public BluetoothGatt mBluetoothGatt;
+    private NotificationReceiver notificationReceiver;
 
     private int mConnectionState = STATE_DISCONNECTED;
 
@@ -33,6 +38,13 @@ public class BluetoothInfoActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_info);
+
+
+        //Help from: https://github.com/kpbird/NotificationListenerService-Example/blob/master/NLSExample/src/main/java/com/kpbird/nlsexample/MainActivity.java
+        notificationReceiver = new NotificationReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.example.magicmirror.NOTIFICATION_INTENT");
+        registerReceiver(notificationReceiver, filter);
 
         Intent intent = getIntent();
         String btDeviceName = (String) intent.getSerializableExtra("btDeviceName");
@@ -47,6 +59,15 @@ public class BluetoothInfoActivity extends AppCompatActivity {
         address.setText(btDeviceAddress);
         status.setText(connectionstatus);
 
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(notificationReceiver);
+        mBluetoothGatt.disconnect();
+        mBluetoothGatt.close();
+        mBluetoothGatt = null;
     }
 
     public void connectBluetoothLE(View view) {
@@ -85,7 +106,6 @@ public class BluetoothInfoActivity extends AppCompatActivity {
                             }
                         });
                         Log.d("BluetoothConnection", "Connected");
-
                     }
 
                     else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -107,6 +127,16 @@ public class BluetoothInfoActivity extends AppCompatActivity {
         }
         else if (connectionstatus == R.string.bluetooth_disconnected) {
             connect.setText(R.string.button_connect);
+        }
+    }
+
+    class NotificationReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mConnectionState == STATE_CONNECTED) {
+                //Send Notification over bluetooth
+            }
         }
     }
 }
