@@ -14,6 +14,12 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
+/*
+    Much of my help in developing this app came from the Android Development documentation.
+    The rest came from various posts on Stack Overflow. I tried to provide a link to the post
+    when possible.
+ */
+
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_ENABLE_BT = 1;

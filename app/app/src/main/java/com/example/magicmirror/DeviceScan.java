@@ -8,7 +8,6 @@ import android.bluetooth.le.ScanResult;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Button;
 
 import java.util.ArrayList;
 

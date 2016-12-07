@@ -6,12 +6,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class NotificationService extends NotificationListenerService {
     Context context;
-    public String ticker;
     public String pack;
     public String subtitle;
     public String title;
