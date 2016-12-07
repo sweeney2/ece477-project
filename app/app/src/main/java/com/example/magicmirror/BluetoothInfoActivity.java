@@ -230,13 +230,13 @@ public class BluetoothInfoActivity extends AppCompatActivity {
                 sendVar = 1;
 
                 if (app_title.length() > 20) {
-                    app_title = app_title.substring(0,20);
+                    app_title = app_title.substring(0,17) + "...";
                 }
                 if (message_title.length() > 20) {
-                    message_title = message_title.substring(0,20);
+                    message_title = message_title.substring(0,17) + "...";
                 }
                 if (message_subtitle.length() > 20) {
-                    message_subtitle = message_subtitle.substring(0,20);
+                    message_subtitle = message_subtitle.substring(0,17) + "...";
                 }
 
                 sendNotification();
