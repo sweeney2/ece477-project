@@ -50,6 +50,18 @@ public class NotificationService extends NotificationListenerService {
             case "com.firstrowria.pushnotificationtester":
                 appName = "Push Notification Tester";
                 break;
+            case "com.google.android.calendar":
+                appName = "Calendar";
+                break;
+            case "com.groupme.android":
+                appName = "GroupMe";
+                break;
+            case "com.snapchat.android":
+                appName = "Snapchat";
+                break;
+            case "com.facebook.katana":
+                appName = "Facebook";
+                break;
             default:
                 appName = "";
         }
