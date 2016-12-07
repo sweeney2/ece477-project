@@ -51,14 +51,15 @@ public class NotificationService extends NotificationListenerService {
             }
 
             Intent intent = new Intent("com.example.magicmirror.NOTIFICATION_INTENT");
+            intent.putExtra("Notification_pack", pack);
             intent.putExtra("Notification_title", title);
             intent.putExtra("Notification_subtitle", subtitle);
             sendBroadcast(intent);
 
-            Log.d("Notification", "Package: " + pack);
-            Log.d("Notification", "Ticker: " + ticker);
-            Log.d("Notification", "Title: " + title);
-            Log.d("Notification", "Subtitle: " + subtitle);
+            //Log.d("Notification", "Package: " + pack);
+            //Log.d("Notification", "Ticker: " + ticker);
+            //Log.d("Notification", "Title: " + title);
+            //Log.d("Notification", "Subtitle: " + subtitle);
         }
 
     }
@@ -66,10 +67,9 @@ public class NotificationService extends NotificationListenerService {
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
         Log.d("Notification","Notification Removed");
-        Intent intent = new Intent("com.example.magicmirror.NOTIFICATION_INTENT");
-        intent.putExtra("Notification_title", "Removed");
-        sendBroadcast(intent);
-
+        //Intent intent = new Intent("com.example.magicmirror.NOTIFICATION_INTENT");
+        //intent.putExtra("Notification_title", "Removed");
+        //sendBroadcast(intent);
     }
 
     @Override
