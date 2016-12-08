@@ -12,6 +12,7 @@ while True:
     # Pass stdin -> stdout
     for message in sys.stdin:
         print(message.strip())
+        sys.stdout.flush()
 
     # Generate messages based on I2C
     pass

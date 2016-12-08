@@ -5,6 +5,7 @@ import math
 import sys
 import sdl2
 import sdl2.ext
+import select
 import time
 from enum import Enum
 
@@ -323,8 +324,10 @@ class TimerUpdater(sdl2.ext.Applicator):
             # handle update
             if timer.update() or ds.is_new:
                 if timer.duration == 5 and not timer.time_left:
-                    print('photo')
                     break
+                elif timer.duration == 5 and timer.time_left == 1:
+                    print('photo')
+                    sys.stdout.flush()
                 position = ds.sprite.position
                 ds.is_new = False
                 ds.sprite = self.factory.from_text(
@@ -625,6 +628,9 @@ def run():
 
     running = True
     while running:
+        if select.select([sys.stdin,],[],[],0.0)[0]:
+            print(next(sys.stdin).strip())
+            sys.stdout.flush()
         events = sdl2.ext.get_events()
         for event in events:
             if event.type == sdl2.SDL_QUIT:
@@ -645,6 +651,7 @@ def run():
                 if event.key.keysym.sym == sdl2.SDLK_DOWN:
                     if current_screen == Screen.home:
                         print('lights')
+                        sys.stdout.flush()
                         current_state[State.light] = not current_state[State.light]
                     current_screen = SCREEN_INFO[current_screen]['down' ]['screen']
                 if event.key.keysym.sym == sdl2.SDLK_LEFT:
