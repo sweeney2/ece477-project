@@ -6,12 +6,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class NotificationService extends NotificationListenerService {
     Context context;
-    public String ticker;
     public String pack;
     public String subtitle;
     public String title;
@@ -31,17 +29,51 @@ public class NotificationService extends NotificationListenerService {
 
     }
 
+    public String getAppName(String pack) {
+        String appName = "";
+
+        switch(pack) {
+            case "com.google.android.gm":
+                appName = "Gmail";
+                break;
+            case "com.google.android.apps.messaging":
+                appName = "Messenger";
+                break;
+            case "com.google.android.talk":
+                appName = "Hangouts";
+                break;
+            case "com.google.android.dailer":
+                appName = "Phone";
+                break;
+            case "com.firstrowria.pushnotificationtester":
+                appName = "Push Notification Tester";
+                break;
+            case "com.google.android.calendar":
+                appName = "Calendar";
+                break;
+            case "com.groupme.android":
+                appName = "GroupMe";
+                break;
+            case "com.snapchat.android":
+                appName = "Snapchat";
+                break;
+            case "com.facebook.katana":
+                appName = "Facebook";
+                break;
+            default:
+                appName = "";
+        }
+
+        return appName;
+    }
+
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
 
         pack = sbn.getPackageName();
-        if (!pack.equals("com.android.vending") && !pack.equals("com.android.providers.downloads")) {
+        String appName = getAppName(pack);
+        if (!appName.equals("")) {
 
-            if (sbn.getNotification().tickerText != null) {
-                ticker = sbn.getNotification().tickerText.toString();
-            } else {
-                ticker = "No info available";
-            }
             extras = sbn.getNotification().extras;
             title = extras.getString("android.title");
             if (extras.getCharSequence("android.text") != null) {
@@ -51,14 +83,10 @@ public class NotificationService extends NotificationListenerService {
             }
 
             Intent intent = new Intent("com.example.magicmirror.NOTIFICATION_INTENT");
+            intent.putExtra("Notification_pack", pack);
             intent.putExtra("Notification_title", title);
             intent.putExtra("Notification_subtitle", subtitle);
             sendBroadcast(intent);
-
-            Log.d("Notification", "Package: " + pack);
-            Log.d("Notification", "Ticker: " + ticker);
-            Log.d("Notification", "Title: " + title);
-            Log.d("Notification", "Subtitle: " + subtitle);
         }
 
     }
@@ -66,10 +94,6 @@ public class NotificationService extends NotificationListenerService {
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
         Log.d("Notification","Notification Removed");
-        Intent intent = new Intent("com.example.magicmirror.NOTIFICATION_INTENT");
-        intent.putExtra("Notification_title", "Removed");
-        sendBroadcast(intent);
-
     }
 
     @Override

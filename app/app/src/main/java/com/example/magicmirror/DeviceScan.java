@@ -8,7 +8,6 @@ import android.bluetooth.le.ScanResult;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Button;
 
 import java.util.ArrayList;
 
@@ -25,7 +24,7 @@ public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
     protected MainActivity context;
     public UpdateUiElements update;
 
-    private static final long SCAN_PERIOD = 15000;
+    private static final long SCAN_PERIOD = 5000;
 
     public DeviceScan (BluetoothAdapter bluetooth, MainActivity view) {
         mBluetoothAdapter = bluetooth;
@@ -98,7 +97,7 @@ public class DeviceScan extends AsyncTask<Boolean, Void, Void> {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            Log.d("Result", "ResultFound");
+            //Log.d("Result", "ResultFound");
             if((!mLeDevices.contains(result.getDevice())) && (result.getDevice().getName() != null)) {
                 mLeDevices.add(result.getDevice());
                 Log.d("Added", result.getDevice().getName());
