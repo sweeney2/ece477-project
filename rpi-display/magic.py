@@ -512,13 +512,13 @@ def to_enable_sprite(sprite):
 
 def arrow_pos(size, direction):
     if direction == 'up':
-        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-840-size[1]
+        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-240-size[1]
     if direction == 'down':
-        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-690
+        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-90
     if direction == 'left':
-        return SCREEN_WIDTH//2-80-size[0], SCREEN_HEIGHT-760-size[1]//2
+        return SCREEN_WIDTH//2-80-size[0], SCREEN_HEIGHT-160-size[1]//2
     if direction == 'right':
-        return SCREEN_WIDTH//2+80, SCREEN_HEIGHT-760-size[1]//2
+        return SCREEN_WIDTH//2+80, SCREEN_HEIGHT-160-size[1]//2
 
 
 # Main loop
@@ -528,7 +528,7 @@ def run():
     global current_screen, current_state
 
     sdl2.ext.init()
-    window = sdl2.ext.Window('Magic Mirror', size=(SCREEN_WIDTH, SCREEN_HEIGHT))
+    window = sdl2.ext.Window('Magic Mirror', size=(SCREEN_WIDTH, SCREEN_HEIGHT), flags=(sdl2.SDL_WINDOW_FULLSCREEN_DESKTOP))
     window.show()
 
     current_screen = Screen.home
@@ -574,7 +574,7 @@ def run():
     entities['light' ].stateset.items = [State.light,]
     entities['images'].stateset.items = [State.images,]
 
-    entities['arrow_center'] = StaticEntity(world, sprites['arrow_center'], (SCREEN_WIDTH - 70) // 2, SCREEN_HEIGHT - 800)
+    entities['arrow_center'] = StaticEntity(world, sprites['arrow_center'], (SCREEN_WIDTH - 70) // 2, SCREEN_HEIGHT - 200)
     entities['arrow_u_f'] = ScreenEntity(world, sprites['arrow_u_f'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]-25)
     entities['arrow_u_e'] = ScreenEntity(world, sprites['arrow_u_e'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]-25)
     entities['arrow_d_f'] = ScreenEntity(world, sprites['arrow_d_f'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]+70)
