@@ -72,8 +72,8 @@ SCREEN_INFO = {
                 'text': 'Timer',
                 },
             'right': {
-                'screen': Screen.graphs_0,
-                'text': 'Water',
+                'screen': Screen.home,
+                'text': '',
                 },
             },
         Screen.camera_0: {
@@ -570,7 +570,7 @@ class Notification(object):
 
     def __init__(self, type_, text):
         super(Notification, self).__init__()
-        self.duration = 2
+        self.duration = 10
         self.type_ = type_
         self.text = text
         self.reset()
@@ -759,13 +759,16 @@ def run():
     entities['cam_timer_2'] = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
     entities['cam_timer_2'].itemset.items += [Screen.camera_2,]
 
-    notif = create_notif(world, 'AppName', 'Example Title', 'subtitle goes here')
+    notif = {}
 
 
     running = True
     while running:
         if select.select([sys.stdin,],[],[],0.0)[0]:
-            message = next(sys.stdin).strip()
+            try:
+                message = next(sys.stdin).strip()
+            except StopIteration as e:
+                break
             if message == 'usb-in':
                 current_state[State.usb] = True
             elif message == 'usb-out':
@@ -774,14 +777,20 @@ def run():
                 current_screen = SCREEN_INFO[current_screen]['up'   ]['screen']
             elif message == 'g:down':
                 if current_screen == Screen.home:
-                    print('lights')
-                    sys.stdout.flush()
                     current_state[State.light] = not current_state[State.light]
+                    print('l:{}'.format('on' if current_state[State.light] else 'off'))
+                    sys.stdout.flush()
                 current_screen = SCREEN_INFO[current_screen]['down' ]['screen']
             elif message == 'g:left':
                 current_screen = SCREEN_INFO[current_screen]['left' ]['screen']
             elif message == 'g:right':
                 current_screen = SCREEN_INFO[current_screen]['right']['screen']
+            elif message.startswith('m:'):
+                parts = message.split(':')
+                print(message)
+                if notif:
+                    world.delete_entities(notif.values())
+                notif = create_notif(world, parts[1], parts[2], parts[3])
             else:
                 print(message)
                 sys.stdout.flush()

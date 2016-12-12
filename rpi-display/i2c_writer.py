@@ -26,9 +26,14 @@ while True:
                     )
             subprocess.call(['raspistill', '-n', '-o', outfile, '-t', '1'])
             print('photo-taken')
-        elif message.strip() == 'lights':
+        elif message.strip().startswith('l:'):
+            val = 0x00
+            if message.strip()[2:] == 'on':
+                val = 0x01
+            elif message.strip()[2:] == 'off':
+                val = 0x02
             with i2c.I2CMaster() as bus:
-                bus.transaction(i2c.writing_bytes(ADDRESS, 0x01))
+                bus.transaction(i2c.writing_bytes(ADDRESS, val))
         else:
             print(message.strip())
 
