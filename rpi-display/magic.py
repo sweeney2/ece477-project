@@ -5,6 +5,7 @@ import math
 import sys
 import sdl2
 import sdl2.ext
+import select
 import time
 from enum import Enum
 
@@ -14,6 +15,7 @@ SCREEN_HEIGHT = 1280  # 480
 HPADDING = 40
 VPADDING = 40
 HR_WIDTH = 1
+NOTIF_HEIGHT = 268
 
 SPRITE_NAMES = (
         'usb',
@@ -323,8 +325,10 @@ class TimerUpdater(sdl2.ext.Applicator):
             # handle update
             if timer.update() or ds.is_new:
                 if timer.duration == 5 and not timer.time_left:
-                    print('photo')
                     break
+                elif timer.duration == 5 and timer.time_left == 1:
+                    print('photo')
+                    sys.stdout.flush()
                 position = ds.sprite.position
                 ds.is_new = False
                 ds.sprite = self.factory.from_text(
@@ -333,6 +337,79 @@ class TimerUpdater(sdl2.ext.Applicator):
                         fontmanager=self.fontmanager
                         )
                 ds.sprite.position = (SCREEN_WIDTH-ds.sprite.size[0])//2, position[1]
+
+
+class NotificationUpdater(sdl2.ext.Applicator):
+
+    def __init__(self):
+        super(NotificationUpdater, self).__init__()
+        self.componenttypes = (DynamicSprite, Notification,)
+        self.fontmanager = sdl2.ext.FontManager(
+                RESOURCES.get_path('Roboto-Regular.ttf'),
+                )
+        self.factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
+
+    def process(self, world, componentsets):
+        global current_screen
+        for ds, notif in componentsets:
+            # handle update
+            notif.update()
+            if ds.is_new:
+                notif.restart()
+                position = ds.sprite.position
+                ds.is_new = False
+                if notif.type_ == 'app':
+                    ds.sprite = self.factory.from_text(
+                            '[{}]'.format(notif.text),
+                            size = 48,
+                            fontmanager=self.fontmanager
+                            )
+                    ds.sprite.position = (HPADDING + 40, 520)
+                elif notif.type_ == 'title':
+                    ds.sprite = self.factory.from_text(
+                            notif.text,
+                            size = 40,
+                            fontmanager=self.fontmanager
+                            )
+                    ds.sprite.position = (HPADDING + 40, 630)
+                elif notif.type_ == 'subtitle':
+                    ds.sprite = self.factory.from_text(
+                            notif.text,
+                            size = 32,
+                            fontmanager=self.fontmanager
+                            )
+                    ds.sprite.position = (HPADDING + 40, 690)
+                elif notif.type_ == 'vl':
+                    ds.sprite = self.factory.from_color(
+                            sdl2.ext.Color(255, 255, 255),
+                            (2, NOTIF_HEIGHT),
+                            )
+                    ds.sprite.position = (HPADDING, 500)
+                elif notif.type_ == 'vr':
+                    ds.sprite = self.factory.from_color(
+                            sdl2.ext.Color(255, 255, 255),
+                            (2, NOTIF_HEIGHT),
+                            )
+                    ds.sprite.position = (SCREEN_WIDTH - HPADDING - 2, 500)
+                elif notif.type_ == 'ht':
+                    ds.sprite = self.factory.from_color(
+                            sdl2.ext.Color(255, 255, 255),
+                            (SCREEN_WIDTH - HPADDING - HPADDING, 2),
+                            )
+                    ds.sprite.position = (HPADDING, 500)
+                elif notif.type_ == 'hm':
+                    ds.sprite = self.factory.from_color(
+                            sdl2.ext.Color(255, 255, 255),
+                            (SCREEN_WIDTH - HPADDING - HPADDING, 1),
+                            )
+                    ds.sprite.position = (HPADDING, 610)
+                elif notif.type_ == 'hb':
+                    ds.sprite = self.factory.from_color(
+                            sdl2.ext.Color(255, 255, 255),
+                            (SCREEN_WIDTH - HPADDING - HPADDING, 2),
+                            )
+                    ds.sprite.position = (HPADDING, 500 + NOTIF_HEIGHT - 2)
+
 
 
 # Entities
@@ -383,6 +460,15 @@ class TimerEntity(sdl2.ext.Entity):
     def __init__(self, world, time, *screens, size=16, posx=0, posy=0):
         self.timer = Timer(time)
         self.dynamicsprite = DynamicSprite(size)
+        self.dynamicsprite.sprite.position = posx, posy
+        self.itemset = ScreenSet(list(screens))
+
+
+class NotificationEntity(sdl2.ext.Entity):
+
+    def __init__(self, world, type_, text='', *screens, posx=0, posy=0):
+        self.notification = Notification(type_, text)
+        self.dynamicsprite = DynamicSprite()
         self.dynamicsprite.sprite.position = posx, posy
         self.itemset = ScreenSet(list(screens))
 
@@ -480,6 +566,43 @@ class Timer(object):
         return '{:1d}:{:02d}'.format(self.time_left//60, self.time_left%60)
 
 
+class Notification(object):
+
+    def __init__(self, type_, text):
+        super(Notification, self).__init__()
+        self.duration = 2
+        self.type_ = type_
+        self.text = text
+        self.reset()
+
+    def restart(self):
+        self.target = time.time() + self.duration
+        self.lastdiff = self.target - time.time()
+        self.running = True
+
+    def reset(self):
+        self.time_left = self.duration
+        self.running = False
+
+    def is_done(self):
+        return not self.time_left
+
+    def update(self):
+        if self.running:
+            now = time.time()
+            if self.target < now:
+                self.time_left = 0
+                self.running = False
+                return True
+            elif int(self.lastdiff) - int(self.target - now):
+                self.lastdiff = self.target - now
+                self.time_left = math.ceil(self.target - now)
+        return False
+
+    def get_time_left(self):
+        return '{:1d}:{:02d}'.format(self.time_left//60, self.time_left%60)
+
+
 class ItemSet(object):
 
     def __init__(self, items):
@@ -509,13 +632,26 @@ def to_enable_sprite(sprite):
 
 def arrow_pos(size, direction):
     if direction == 'up':
-        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-840-size[1]
+        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-240-size[1]
     if direction == 'down':
-        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-690
+        return (SCREEN_WIDTH-size[0])//2, SCREEN_HEIGHT-90
     if direction == 'left':
-        return SCREEN_WIDTH//2-80-size[0], SCREEN_HEIGHT-760-size[1]//2
+        return SCREEN_WIDTH//2-80-size[0], SCREEN_HEIGHT-160-size[1]//2
     if direction == 'right':
-        return SCREEN_WIDTH//2+80, SCREEN_HEIGHT-760-size[1]//2
+        return SCREEN_WIDTH//2+80, SCREEN_HEIGHT-160-size[1]//2
+
+
+def create_notif(world, app, title, subtitle):
+    notif = {}
+    notif['app'     ] = NotificationEntity(world, 'app'     , app, Screen.home)
+    notif['title'   ] = NotificationEntity(world, 'title'   , title, Screen.home)
+    notif['subtitle'] = NotificationEntity(world, 'subtitle', subtitle, Screen.home)
+    notif['vl'      ] = NotificationEntity(world, 'vl'      , '', Screen.home)
+    notif['vr'      ] = NotificationEntity(world, 'vr'      , '', Screen.home)
+    notif['ht'      ] = NotificationEntity(world, 'ht'      , '', Screen.home)
+    notif['hm'      ] = NotificationEntity(world, 'hm'      , '', Screen.home)
+    notif['hb'      ] = NotificationEntity(world, 'hb'      , '', Screen.home)
+    return notif
 
 
 # Main loop
@@ -540,10 +676,12 @@ def run():
     tu = TimeUpdater()
     du = DateUpdater()
     ttu = TimerUpdater()
+    nu = NotificationUpdater()
 
     world.add_system(tu)
     world.add_system(du)
     world.add_system(ttu)
+    world.add_system(nu)
 
 
     factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
@@ -571,7 +709,7 @@ def run():
     entities['light' ].stateset.items = [State.light,]
     entities['images'].stateset.items = [State.images,]
 
-    entities['arrow_center'] = StaticEntity(world, sprites['arrow_center'], (SCREEN_WIDTH - 70) // 2, SCREEN_HEIGHT - 800)
+    entities['arrow_center'] = StaticEntity(world, sprites['arrow_center'], (SCREEN_WIDTH - 70) // 2, SCREEN_HEIGHT - 200)
     entities['arrow_u_f'] = ScreenEntity(world, sprites['arrow_u_f'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]-25)
     entities['arrow_u_e'] = ScreenEntity(world, sprites['arrow_u_e'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]-25)
     entities['arrow_d_f'] = ScreenEntity(world, sprites['arrow_d_f'], posx=sprites['arrow_center'].position[0]   , posy=sprites['arrow_center'].position[1]+70)
@@ -621,10 +759,17 @@ def run():
     entities['cam_timer_2'] = ScreenEntity(world, to_enable_sprite(s), posx=x, posy=y)
     entities['cam_timer_2'].itemset.items += [Screen.camera_2,]
 
+    notif = create_notif(world, 'AppName', 'Example Title', 'subtitle goes here')
 
 
     running = True
     while running:
+        if select.select([sys.stdin,],[],[],0.0)[0]:
+            print(next(sys.stdin).strip())
+            sys.stdout.flush()
+        if notif and not notif['app'].notification.time_left:
+            world.delete_entities(notif.values())
+            notif = {}
         events = sdl2.ext.get_events()
         for event in events:
             if event.type == sdl2.SDL_QUIT:
@@ -645,6 +790,7 @@ def run():
                 if event.key.keysym.sym == sdl2.SDLK_DOWN:
                     if current_screen == Screen.home:
                         print('lights')
+                        sys.stdout.flush()
                         current_state[State.light] = not current_state[State.light]
                     current_screen = SCREEN_INFO[current_screen]['down' ]['screen']
                 if event.key.keysym.sym == sdl2.SDLK_LEFT:

@@ -28,15 +28,18 @@ for message in sys.stdin:
         continue
 
     print('usb-in')
+    sys.stdout.flush()
 
     dev_dir = '/dev/{}'.format(device)
     mnt_dir = '/mnt/{}'.format(device)
 
     subprocess.call(['sudo', 'mkdir', '-p', mnt_dir])
-    subprocess.call(['sudo', 'mount', dev_dir, mnt_dir])
+    subprocess.call(['sudo', 'mount', '-w', dev_dir, mnt_dir])
+    subprocess.call(['sudo', 'mount', '-o', 'rw,remount', mnt_dir])
     subprocess.call(['sudo', 'rsync', '-r', IMAGE_DIR, mnt_dir])
     subprocess.call(['sudo', 'umount', mnt_dir])
     subprocess.call(['sudo', 'rmdir', '/mnt/{}'.format(device)])
 
     print('usb-out')
+    sys.stdout.flush()
 
