@@ -83,7 +83,7 @@ public class NotificationService extends NotificationListenerService {
             }
 
             Intent intent = new Intent("com.example.magicmirror.NOTIFICATION_INTENT");
-            intent.putExtra("Notification_pack", pack);
+            intent.putExtra("Notification_pack", appName);
             intent.putExtra("Notification_title", title);
             intent.putExtra("Notification_subtitle", subtitle);
             sendBroadcast(intent);
