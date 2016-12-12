@@ -150,7 +150,7 @@ typedef enum
 
 
 #ifndef I2C1_CONFIG_TR_QUEUE_LENGTH
-        #define I2C1_CONFIG_TR_QUEUE_LENGTH 1
+        #define I2C1_CONFIG_TR_QUEUE_LENGTH 4
 #endif
 
 #define I2C1_TRANSMIT_REG                       I2C1TRN                 // Defines the transmit register used to send data.
@@ -286,6 +286,9 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _MI2C1Interrupt ( void )
 
                 // send the start condition
                 I2C1_START_CONDITION_ENABLE_BIT = 1;
+                //if (I2C1STATbits.BCL) {
+                  //  int j = 1;
+                //}
 
                 // start the i2c request
                 i2c1_state = S_MASTER_SEND_ADDR;
@@ -409,6 +412,7 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _MI2C1Interrupt ( void )
                 else
                 {
                     // Next state is transmit
+
                     i2c1_state = S_MASTER_SEND_DATA;
                 }
             }

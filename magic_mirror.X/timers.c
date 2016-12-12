@@ -35,8 +35,8 @@ static volatile unsigned int TickCount[3] = {0, 0, 0};      //We will keep track
 void Iimers_Init(void)
 {
     //Timer 5 is used for interrupt based timers counting 1ms intervals to a resolution of 0.1ms
-    T5CON = TIMER_OFF;                      //Timer 5 off
-    TMR5 = 0;                               //Clear timer 5
+    T5CON = TIMER_OFF;                      //Timer 4 off
+    TMR5 = 0;                               //Clear timer 4
     PR5 = TIMER_100US_PERIOD;               //Set the period value for 100us
     T5CON = TIMER_ON_PRESCALE1;             //using 1:1 prescaler and turn on timer 5
     IFS1bits.T5IF = 0;                      //Clear the interrpt flag
@@ -49,6 +49,8 @@ void Iimers_Init(void)
 void StartTimer(unsigned char Timer, unsigned int Count)
 {
     TickCount[Timer] = Count * 10; //Interrupt is every 100us but StartTimer() takes multiple of 1ms so multiply by 10;
+    IFS1bits.T5IF = 0;                      //Clear the interrpt flag
+    IEC1bits.T5IE = 1;                      //Enable the timer 5 interrupt (global enable is in main initialization)
 }
 
 //**********************************************************************************************************************

@@ -50,6 +50,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "i2c1.h"
+#include "i2c2.h"
 #include "ext_int.h"
 #include "traps.h"
 #include "interrupt_manager.h"

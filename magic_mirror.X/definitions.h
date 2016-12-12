@@ -24,7 +24,7 @@
  */
 
 // Clock frequency
-#define FCY (16000000)                                  //8MHz crystal x 4 PLL = 32 MHz (2 clocks per instruction)
+#define FCY (3680000)                                  //8MHz crystal x 4 PLL = 32 MHz (2 clocks per instruction)
 
 #define _ISR_NO_AUTO_PSV __attribute__((interrupt,no_auto_psv))
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <executable name="dist/default/debug/pcb_magic_mirror.X.debug.elf">
+    <memory name="data">
+      <units>bytes</units>
+      <length>53248</length>
+      <used>4588</used>
+      <free>48660</free>
+    </memory>
+    <memory name="program">
+      <units>bytes</units>
+      <length>524544</length>
+      <used>17166</used>
+      <free>507378</free>
+    </memory>
+  </executable>
+</project>
