@@ -10,8 +10,8 @@ import time
 from enum import Enum
 
 RESOURCES = sdl2.ext.Resources(__file__, 'resources')
-SCREEN_WIDTH = 720  # 270
-SCREEN_HEIGHT = 1280  # 480
+SCREEN_WIDTH = 900  # 270
+SCREEN_HEIGHT = 1600  # 480
 HPADDING = 40
 VPADDING = 40
 HR_WIDTH = 1
@@ -765,8 +765,26 @@ def run():
     running = True
     while running:
         if select.select([sys.stdin,],[],[],0.0)[0]:
-            print(next(sys.stdin).strip())
-            sys.stdout.flush()
+            message = next(sys.stdin).strip()
+            if message == 'usb-in':
+                current_state[State.usb] = True
+            elif message == 'usb-out':
+                current_state[State.usb] = False
+            elif message == 'g:up':
+                current_screen = SCREEN_INFO[current_screen]['up'   ]['screen']
+            elif message == 'g:down':
+                if current_screen == Screen.home:
+                    print('lights')
+                    sys.stdout.flush()
+                    current_state[State.light] = not current_state[State.light]
+                current_screen = SCREEN_INFO[current_screen]['down' ]['screen']
+            elif message == 'g:left':
+                current_screen = SCREEN_INFO[current_screen]['left' ]['screen']
+            elif message == 'g:right':
+                current_screen = SCREEN_INFO[current_screen]['right']['screen']
+            else:
+                print(message)
+                sys.stdout.flush()
         if notif and not notif['app'].notification.time_left:
             world.delete_entities(notif.values())
             notif = {}
@@ -779,8 +797,6 @@ def run():
                 if event.key.keysym.sym == sdl2.SDLK_q:
                     running = False
                     break
-                if event.key.keysym.sym == sdl2.SDLK_a:
-                    current_state[State.usb] = not current_state[State.usb]
                 if event.key.keysym.sym == sdl2.SDLK_s:
                     current_state[State.water] = not current_state[State.water]
                 if event.key.keysym.sym == sdl2.SDLK_d:
