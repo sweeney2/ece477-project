@@ -134,7 +134,7 @@ public class BluetoothInfoActivity extends AppCompatActivity {
                 public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         if (mBluetoothGatt != null) {
-                            BluetoothGattService bluetoothLEservice = mBluetoothGatt.getService(UUID.fromString("11223344-5566-7788-9900-aabbccddeeff"));
+                            BluetoothGattService bluetoothLEservice = mBluetoothGatt.getService(UUID.fromString("01020304-0506-0708-0900-0a0b0c0d0e0f"));
 
                             if (bluetoothLEservice == null) {
                                 Log.d("Notification", "No Services Found");
@@ -142,7 +142,7 @@ public class BluetoothInfoActivity extends AppCompatActivity {
                             else {
                                 Log.d("GattService", "Service");
                                 Log.d("GattService", "UUID: " + bluetoothLEservice.getUuid().toString());
-                                app_titleCharacteristic = bluetoothLEservice.getCharacteristic(UUID.fromString("01020304-0506-0708-0900-0a0b0c0d0e0f"));
+                                app_titleCharacteristic = bluetoothLEservice.getCharacteristic(UUID.fromString("11223344-5566-7788-9900-aabbccddeeff"));
                                 if (app_titleCharacteristic == null) {
                                     Log.d("GattCharacteristic", "App Title Characteristic Not Found");
                                 }
