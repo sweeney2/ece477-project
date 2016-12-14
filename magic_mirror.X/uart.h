@@ -25,8 +25,11 @@
 
 void UART_Init(void);
 void UART_EnableFlowControl(void);
-void UART_TxStart(void);
-int IsNewRxData(void);
-int ReadRxBuffer(void);
-void WriteTxBuffer(unsigned char);
-
+void UART_Tx1Start(void);
+int IsNewRx1Data(void);
+int ReadRx1Buffer(void);
+void WriteTx1Buffer(unsigned char);
+void UART_Tx2Start(void);
+int IsNewRx2Data(void);
+int ReadRx2Buffer(void);
+void WriteTx2Buffer(unsigned char);

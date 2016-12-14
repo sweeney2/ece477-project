@@ -8,20 +8,24 @@
 #ifndef APDS9960_H
 #define	APDS9960_H
 
-#include "p24fj128ga010.h"
+#include "p24ep512gp806.h"
 #include "GenericTypeDefs.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "I2Clib.h"
 #include "timers.h"
 #include "lcd.h"
+#include <stdint.h>
+#include "definitions.h"
+#include "mcc_generated_files/mcc.h"
 /* Debug */
 #define DEBUG                   0
 
 /* APDS-9960 I2C address */
 #define APDS9960_I2C_ADDR       0x39
 
+#define SLAVE_I2C_GENERIC_RETRY_MAX           100
+#define SLAVE_I2C_GENERIC_DEVICE_TIMEOUT      3000   // define slave timeout original 50
 /* Gesture parameters */
 #define GESTURE_THRESHOLD_OUT   10
 #define GESTURE_SENSITIVITY_1   50
@@ -203,18 +207,18 @@ enum {
 
 /* Container for gesture data */
 typedef struct gesture_data_type {
-    unsigned char u_data[32];
-    unsigned char d_data[32];
-    unsigned char l_data[32];
-    unsigned char r_data[32];
-    unsigned char index;
-    unsigned char total_gestures;
-    unsigned char in_threshold;
-    unsigned char out_threshold;
+    uint8_t u_data[32];
+    uint8_t d_data[32];
+    uint8_t l_data[32];
+    uint8_t r_data[32];
+    uint8_t index;
+    uint8_t total_gestures;
+    uint8_t in_threshold;
+    uint8_t out_threshold;
 } gesture_data_type;
 
-    unsigned char getMode();
-    bool setMode(unsigned char mode, unsigned char enable);
+    uint8_t getMode();
+    bool setMode(uint8_t mode, uint8_t enable);
     
     /* Turn the APDS-9960 on and off */
     bool enablePower();
@@ -232,51 +236,51 @@ typedef struct gesture_data_type {
     //INITIALIZE APDS9960
     bool init();
     /* LED drive strength control */
-    unsigned char getLEDDrive();
-    bool setLEDDrive(unsigned char drive);
-    unsigned char getGestureLEDDrive();
-    bool setGestureLEDDrive(unsigned char drive);
+    uint8_t getLEDDrive();
+    bool setLEDDrive(uint8_t drive);
+    uint8_t getGestureLEDDrive();
+    bool setGestureLEDDrive(uint8_t drive);
     
     /* Gain control */
-    unsigned char getAmbientLightGain();
-    bool setAmbientLightGain(unsigned char gain);
-    unsigned char getProximityGain();
-    bool setProximityGain(unsigned char gain);
-    unsigned char getGestureGain();
-    bool setGestureGain(unsigned char gain);
+    uint8_t getAmbientLightGain();
+    bool setAmbientLightGain(uint8_t gain);
+    uint8_t getProximityGain();
+    bool setProximityGain(uint8_t gain);
+    uint8_t getGestureGain();
+    bool setGestureGain(uint8_t gain);
     
     /* Get and set light interrupt thresholds */
-    bool getLightIntLowThreshold(unsigned int threshold);
-    bool setLightIntLowThreshold(unsigned int threshold);
-    bool getLightIntHighThreshold(unsigned int threshold);
-    bool setLightIntHighThreshold(unsigned int threshold);
+    bool getLightIntLowThreshold(uint16_t *threshold);
+    bool setLightIntLowThreshold(uint16_t threshold);
+    bool getLightIntHighThreshold(uint16_t *threshold);
+    bool setLightIntHighThreshold(uint16_t threshold);
     
     /* Get and set proximity interrupt thresholds */
-    bool getProximityIntLowThreshold(unsigned char threshold);
-    bool setProximityIntLowThreshold(unsigned char threshold);
-    bool getProximityIntHighThreshold(unsigned char threshold);
-    bool setProximityIntHighThreshold(unsigned char threshold);
+    bool getProximityIntLowThreshold(uint8_t *threshold);
+    bool setProximityIntLowThreshold(uint8_t threshold);
+    bool getProximityIntHighThreshold(uint8_t *threshold);
+    bool setProximityIntHighThreshold(uint8_t threshold);
     
     /* Get and set interrupt enables */
-    unsigned char getAmbientLightIntEnable();
-    bool setAmbientLightIntEnable(unsigned char enable);
-    unsigned char getProximityIntEnable();
-    bool setProximityIntEnable(unsigned char enable);
-    unsigned char getGestureIntEnable();
-    bool setGestureIntEnable(unsigned char enable);
+    uint8_t getAmbientLightIntEnable();
+    bool setAmbientLightIntEnable(uint8_t enable);
+    uint8_t getProximityIntEnable();
+    bool setProximityIntEnable(uint8_t enable);
+    uint8_t getGestureIntEnable();
+    bool setGestureIntEnable(uint8_t enable);
     
     /* Clear interrupts */
     bool clearAmbientLightInt();
     bool clearProximityInt();
     
     /* Ambient light methods */
-    bool readAmbientLight(unsigned int val);
-    bool readRedLight(unsigned int val);
-    bool readGreenLight(unsigned int val);
-    bool readBlueLight(unsigned int val);
+    bool readAmbientLight(uint16_t *val);
+    bool readRedLight(uint16_t *val);
+    bool readGreenLight(uint16_t *val);
+    bool readBlueLight(uint16_t *val);
     
     /* Proximity methods */
-    bool readProximity(unsigned char val);
+    bool readProximity(uint8_t val);
     
     /* Gesture methods */
     bool isGestureAvailable();
@@ -288,52 +292,41 @@ typedef struct gesture_data_type {
     bool decodeGesture();
 
     /* Proximity Interrupt Threshold */
-    unsigned char getProxIntLowThresh();
-    bool setProxIntLowThresh(unsigned char threshold);
-    unsigned char getProxIntHighThresh();
-    bool setProxIntHighThresh(unsigned char threshold);
+    uint8_t getProxIntLowThresh();
+    bool setProxIntLowThresh(uint8_t threshold);
+    uint8_t getProxIntHighThresh();
+    bool setProxIntHighThresh(uint8_t threshold);
     
     /* LED Boost Control */
-    unsigned char getLEDBoost();
-    bool setLEDBoost(unsigned char boost);
+    uint8_t getLEDBoost();
+    bool setLEDBoost(uint8_t boost);
     
     /* Proximity photodiode select */
-    unsigned char getProxGainCompEnable();
-    bool setProxGainCompEnable(unsigned char enable);
-    unsigned char getProxPhotoMask();
-    bool setProxPhotoMask(unsigned char mask);
+    uint8_t getProxGainCompEnable();
+    bool setProxGainCompEnable(uint8_t enable);
+    uint8_t getProxPhotoMask();
+    bool setProxPhotoMask(uint8_t mask);
     
     /* Gesture threshold control */
-    unsigned char getGestureEnterThresh();
-    bool setGestureEnterThresh(unsigned char threshold);
-    unsigned char getGestureExitThresh();
-    bool setGestureExitThresh(unsigned char threshold);
+    uint8_t getGestureEnterThresh();
+    bool setGestureEnterThresh(uint8_t threshold);
+    uint8_t getGestureExitThresh();
+    bool setGestureExitThresh(uint8_t threshold);
     
     /* Gesture LED, gain, and time control */
-    unsigned char getGestureWaitTime();
-    bool setGestureWaitTime(unsigned char time);
+    uint8_t getGestureWaitTime();
+    bool setGestureWaitTime(uint8_t time);
     
     /* Gesture mode */
-    unsigned char getGestureMode();
-    bool setGestureMode(unsigned char mode);
+    uint8_t getGestureMode();
+    bool setGestureMode(uint8_t mode);
 
     /* Raw I2C Commands */
-    bool wireWriteByte(unsigned char val);
-    bool wireWriteDataByte(unsigned char reg, unsigned char val);
-    bool wireWriteDataBlock(unsigned char reg, unsigned char *val, unsigned int len);
-    bool wireReadDataByte(unsigned char reg, unsigned char *val);
-    int wireReadDataBlock(unsigned char reg, unsigned char *val, unsigned int len);
-
-    /* Members */
-    gesture_data_type gesture_data_;
-    int gesture_ud_delta_;
-    int gesture_lr_delta_;
-    int gesture_ud_count_;
-    int gesture_lr_count_;
-    int gesture_near_count_;
-    int gesture_far_count_;
-    int gesture_state_;
-    int gesture_motion_;
+    bool wireWriteByte(uint8_t val);
+    bool wireWriteDataByte(uint8_t reg, uint8_t val);
+    bool wireWriteDataBlock(uint8_t reg, uint8_t *val, unsigned int len);
+    bool wireReadDataByte(uint8_t reg, uint8_t *val);
+    int wireReadDataBlock(uint8_t reg, uint8_t *val, uint8_t len);
 
 #endif	/* APDS9960_H */
 

@@ -3,8 +3,8 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>magic_mirror</name>
-            <creation-uuid>cbaf6274-153d-4617-ba04-7c1f0e6fbf4f</creation-uuid>
+            <name>pcb_magic_mirror</name>
+            <creation-uuid>eb2dcd91-13d9-4756-9aa1-8a9d00f5fbaf</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>
             <cpp-extensions/>
@@ -13,5 +13,8 @@
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <make-dep-projects/>
         </data>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>Bluetooth</word>
+        </spellchecker-wordlist>
     </configuration>
 </project>

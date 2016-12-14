@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=magic_mirror.X
+PROJECTNAME=pcb_magic_mirror.X
 
 # Active Configuration
 DEFAULTCONF=default

@@ -4,10 +4,23 @@
  *
  * @return True if initialized successfully. False otherwise.
  */
+
+   /* Members */
+    gesture_data_type gesture_data_;
+    int gesture_ud_delta_;
+    int gesture_lr_delta_;
+    int gesture_ud_count_;
+    int gesture_lr_count_;
+    int gesture_near_count_;
+    int gesture_far_count_;
+    int gesture_state_;
+    int gesture_motion_;
+
+
 bool init()
 {
-    unsigned char id;
-    
+    uint8_t id;
+
     gesture_ud_delta_ = 0;
     gesture_lr_delta_ = 0;
 
@@ -20,10 +33,6 @@ bool init()
     gesture_state_ = 0;
     gesture_motion_ = DIR_NONE;
 
-    /* Initialize I2C */
-    //Wire.begin();
-    I2C_SWini();
-    I2C_HWini();
 
     /* Read ID register and check against known values for APDS-9960 */
     if( !wireReadDataByte(APDS9960_ID, &id) ) {
@@ -131,8 +140,8 @@ bool init()
 
 #if 0
     /*Gesture config register dump */
-    unsigned char reg;
-    unsigned char val;
+    uint8_t reg;
+    uint8_t val;
 
     for(reg = 0x80;reg <= 0xAF; reg++) {
         if( (reg != 0x82) && \
@@ -168,9 +177,9 @@ bool init()
  *
  * @return Contents of the ENABLE register. 0xFF if error.
  */
-unsigned char getMode()
+uint8_t getMode()
 {
-    unsigned char enable_value;
+    uint8_t enable_value;
 
     /* Read current ENABLE register */
     if( !wireReadDataByte(APDS9960_ENABLE, &enable_value) ) {
@@ -187,9 +196,9 @@ unsigned char getMode()
  * @param[in] enable ON (1) or OFF (0)
  * @return True if operation success. False otherwise.
  */
-bool setMode(unsigned char mode, unsigned char enable)
+bool setMode(uint8_t mode, uint8_t enable)
 {
-    unsigned char reg_val;
+    uint8_t reg_val;
 
     /* Read current ENABLE register */
     reg_val = getMode();
@@ -402,7 +411,7 @@ bool disableGestureSensor()
  */
 bool isGestureAvailable()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GSTATUS register */
     if( !wireReadDataByte(APDS9960_GSTATUS, &val) ) {
@@ -427,10 +436,10 @@ bool isGestureAvailable()
  */
 int readGesture()
 {
-    unsigned char fifo_level = 0;
-    unsigned char bytes_read = 0;
-    unsigned char fifo_data[128];
-    unsigned char gstatus;
+    uint8_t fifo_level = 0;
+    uint8_t bytes_read = 0;
+    uint8_t fifo_data[128];
+    uint8_t gstatus;
     int motion;
     int i;
 
@@ -458,15 +467,10 @@ int readGesture()
                 return ERROR;
             }
 
-#if DEBUG
-            Serial.print("FIFO Level: ");
-            Serial.println(fifo_level);
-#endif
-
             /* If there's stuff in the FIFO, read it into our data block */
             if( fifo_level > 0) {
                 bytes_read = wireReadDataBlock(  APDS9960_GFIFO_U,
-                                                (unsigned char*)fifo_data,
+                                                (uint8_t *)fifo_data,
                                                 (fifo_level * 4) );
                 if( bytes_read == -1 ) {
                     return ERROR;
@@ -573,22 +577,22 @@ bool disablePower()
  * @param[out] val value of the light sensor.
  * @return True if operation successful. False otherwise.
  */
-bool readAmbientLight(unsigned int val)
+bool readAmbientLight(uint16_t *val)
 {
-    unsigned char val_byte;
-    val = 0;
+    uint8_t val_byte;
+    *val = 0;
 
     /* Read value from clear channel, low byte register */
     if( !wireReadDataByte(APDS9960_CDATAL, &val_byte) ) {
         return false;
     }
-    val = val_byte;
+    *val = val_byte;
 
     /* Read value from clear channel, high byte register */
     if( !wireReadDataByte(APDS9960_CDATAH, &val_byte) ) {
         return false;
     }
-    val = val + ((unsigned int)val_byte << 8);
+    *val = *val + ((uint16_t)val_byte << 8);
 
     return true;
 }
@@ -599,22 +603,22 @@ bool readAmbientLight(unsigned int val)
  * @param[out] val value of the light sensor.
  * @return True if operation successful. False otherwise.
  */
-bool readRedLight(unsigned int val)
+bool readRedLight(uint16_t *val)
 {
-    unsigned char val_byte;
-    val = 0;
+    uint8_t val_byte;
+    *val = 0;
 
     /* Read value from clear channel, low byte register */
     if( !wireReadDataByte(APDS9960_RDATAL, &val_byte) ) {
         return false;
     }
-    val = val_byte;
+    *val = val_byte;
 
     /* Read value from clear channel, high byte register */
     if( !wireReadDataByte(APDS9960_RDATAH, &val_byte) ) {
         return false;
     }
-    val = val + ((unsigned int)val_byte << 8);
+    *val = *val + ((uint16_t)val_byte << 8);
 
     return true;
 }
@@ -625,22 +629,22 @@ bool readRedLight(unsigned int val)
  * @param[out] val value of the light sensor.
  * @return True if operation successful. False otherwise.
  */
-bool readGreenLight(unsigned int val)
+bool readGreenLight(uint16_t *val)
 {
-    unsigned char val_byte;
-    val = 0;
+    uint8_t val_byte;
+    *val = 0;
 
     /* Read value from clear channel, low byte register */
     if( !wireReadDataByte(APDS9960_GDATAL, &val_byte) ) {
         return false;
     }
-    val = val_byte;
+    *val = val_byte;
 
     /* Read value from clear channel, high byte register */
     if( !wireReadDataByte(APDS9960_GDATAH, &val_byte) ) {
         return false;
     }
-    val = val + ((unsigned int)val_byte << 8);
+    *val = *val + ((uint16_t)val_byte << 8);
 
     return true;
 }
@@ -651,22 +655,22 @@ bool readGreenLight(unsigned int val)
  * @param[out] val value of the light sensor.
  * @return True if operation successful. False otherwise.
  */
-bool readBlueLight(unsigned int val)
+bool readBlueLight(uint16_t *val)
 {
-    unsigned char val_byte;
-    val = 0;
+    uint8_t val_byte;
+    *val = 0;
 
     /* Read value from clear channel, low byte register */
     if( !wireReadDataByte(APDS9960_BDATAL, &val_byte) ) {
         return false;
     }
-    val = val_byte;
+    *val = val_byte;
 
     /* Read value from clear channel, high byte register */
     if( !wireReadDataByte(APDS9960_BDATAH, &val_byte) ) {
         return false;
     }
-    val = val + ((unsigned int)val_byte << 8);
+    *val = *val + ((uint16_t)val_byte << 8);
 
     return true;
 }
@@ -681,7 +685,7 @@ bool readBlueLight(unsigned int val)
  * @param[out] val value of the proximity sensor.
  * @return True if operation successful. False otherwise.
  */
-bool readProximity(unsigned char val)
+bool readProximity(uint8_t val)
 {
     val = 0;
 
@@ -725,14 +729,14 @@ void resetGestureParameters()
  */
 bool processGestureData()
 {
-    unsigned char u_first = 0;
-    unsigned char d_first = 0;
-    unsigned char l_first = 0;
-    unsigned char r_first = 0;
-    unsigned char u_last = 0;
-    unsigned char d_last = 0;
-    unsigned char l_last = 0;
-    unsigned char r_last = 0;
+    uint8_t u_first = 0;
+    uint8_t d_first = 0;
+    uint8_t l_first = 0;
+    uint8_t r_first = 0;
+    uint8_t u_last = 0;
+    uint8_t d_last = 0;
+    uint8_t l_last = 0;
+    uint8_t r_last = 0;
     int ud_ratio_first;
     int lr_ratio_first;
     int ud_ratio_last;
@@ -985,9 +989,9 @@ bool decodeGesture()
  *
  * @return lower threshold
  */
-unsigned char getProxIntLowThresh()
+uint8_t getProxIntLowThresh()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from PILT register */
     if( !wireReadDataByte(APDS9960_PILT, &val) ) {
@@ -1003,7 +1007,7 @@ unsigned char getProxIntLowThresh()
  * @param[in] threshold the lower proximity threshold
  * @return True if operation successful. False otherwise.
  */
-bool setProxIntLowThresh(unsigned char threshold)
+bool setProxIntLowThresh(uint8_t threshold)
 {
     if( !wireWriteDataByte(APDS9960_PILT, threshold) ) {
         return false;
@@ -1017,9 +1021,9 @@ bool setProxIntLowThresh(unsigned char threshold)
  *
  * @return high threshold
  */
-unsigned char getProxIntHighThresh()
+uint8_t getProxIntHighThresh()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from PIHT register */
     if( !wireReadDataByte(APDS9960_PIHT, &val) ) {
@@ -1035,7 +1039,7 @@ unsigned char getProxIntHighThresh()
  * @param[in] threshold the high proximity threshold
  * @return True if operation successful. False otherwise.
  */
-bool setProxIntHighThresh(unsigned char threshold)
+bool setProxIntHighThresh(uint8_t threshold)
 {
     if( !wireWriteDataByte(APDS9960_PIHT, threshold) ) {
         return false;
@@ -1055,9 +1059,9 @@ bool setProxIntHighThresh(unsigned char threshold)
  *
  * @return the value of the LED drive strength. 0xFF on failure.
  */
-unsigned char getLEDDrive()
+uint8_t getLEDDrive()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONTROL register */
     if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
@@ -1082,9 +1086,9 @@ unsigned char getLEDDrive()
  * @param[in] drive the value (0-3) for the LED drive strength
  * @return True if operation successful. False otherwise.
  */
-bool setLEDDrive(unsigned char drive)
+bool setLEDDrive(uint8_t drive)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONTROL register */
     if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
@@ -1116,9 +1120,9 @@ bool setLEDDrive(unsigned char drive)
  *
  * @return the value of the proximity gain. 0xFF on failure.
  */
-unsigned char getProximityGain()
+uint8_t getProximityGain()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONTROL register */
     if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
@@ -1143,9 +1147,9 @@ unsigned char getProximityGain()
  * @param[in] drive the value (0-3) for the gain
  * @return True if operation successful. False otherwise.
  */
-bool setProximityGain(unsigned char drive)
+bool setProximityGain(uint8_t drive)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONTROL register */
     if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
@@ -1177,9 +1181,9 @@ bool setProximityGain(unsigned char drive)
  *
  * @return the value of the ALS gain. 0xFF on failure.
  */
-unsigned char getAmbientLightGain()
+uint8_t getAmbientLightGain()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONTROL register */
     if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
@@ -1204,9 +1208,9 @@ unsigned char getAmbientLightGain()
  * @param[in] drive the value (0-3) for the gain
  * @return True if operation successful. False otherwise.
  */
-bool setAmbientLightGain(unsigned char drive)
+bool setAmbientLightGain(uint8_t drive)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONTROL register */
     if( !wireReadDataByte(APDS9960_CONTROL, &val) ) {
@@ -1237,9 +1241,9 @@ bool setAmbientLightGain(unsigned char drive)
  *
  * @return The LED boost value. 0xFF on failure.
  */
-unsigned char getLEDBoost()
+uint8_t getLEDBoost()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONFIG2 register */
     if( !wireReadDataByte(APDS9960_CONFIG2, &val) ) {
@@ -1264,9 +1268,9 @@ unsigned char getLEDBoost()
  * @param[in] drive the value (0-3) for current boost (100-300%)
  * @return True if operation successful. False otherwise.
  */
-bool setLEDBoost(unsigned char boost)
+bool setLEDBoost(uint8_t boost)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONFIG2 register */
     if( !wireReadDataByte(APDS9960_CONFIG2, &val) ) {
@@ -1292,9 +1296,9 @@ bool setLEDBoost(unsigned char boost)
  *
  * @return 1 if compensation is enabled. 0 if not. 0xFF on error.
  */
-unsigned char getProxGainCompEnable()
+uint8_t getProxGainCompEnable()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONFIG3 register */
     if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
@@ -1313,9 +1317,9 @@ unsigned char getProxGainCompEnable()
  * @param[in] enable 1 to enable compensation. 0 to disable compensation.
  * @return True if operation successful. False otherwise.
  */
- bool setProxGainCompEnable(unsigned char enable)
+ bool setProxGainCompEnable(uint8_t enable)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONFIG3 register */
     if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
@@ -1348,9 +1352,9 @@ unsigned char getProxGainCompEnable()
  *
  * @return Current proximity mask for photodiodes. 0xFF on error.
  */
-unsigned char getProxPhotoMask()
+uint8_t getProxPhotoMask()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONFIG3 register */
     if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
@@ -1376,9 +1380,9 @@ unsigned char getProxPhotoMask()
  * @param[in] mask 4-bit mask value
  * @return True if operation successful. False otherwise.
  */
-bool setProxPhotoMask(unsigned char mask)
+bool setProxPhotoMask(uint8_t mask)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from CONFIG3 register */
     if( !wireReadDataByte(APDS9960_CONFIG3, &val) ) {
@@ -1403,9 +1407,9 @@ bool setProxPhotoMask(unsigned char mask)
  *
  * @return Current entry proximity threshold.
  */
-unsigned char getGestureEnterThresh()
+uint8_t getGestureEnterThresh()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GPENTH register */
     if( !wireReadDataByte(APDS9960_GPENTH, &val) ) {
@@ -1421,7 +1425,7 @@ unsigned char getGestureEnterThresh()
  * @param[in] threshold proximity value needed to start gesture mode
  * @return True if operation successful. False otherwise.
  */
-bool setGestureEnterThresh(unsigned char threshold)
+bool setGestureEnterThresh(uint8_t threshold)
 {
     if( !wireWriteDataByte(APDS9960_GPENTH, threshold) ) {
         return false;
@@ -1435,9 +1439,9 @@ bool setGestureEnterThresh(unsigned char threshold)
  *
  * @return Current exit proximity threshold.
  */
-unsigned char getGestureExitThresh()
+uint8_t getGestureExitThresh()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GEXTH register */
     if( !wireReadDataByte(APDS9960_GEXTH, &val) ) {
@@ -1453,7 +1457,7 @@ unsigned char getGestureExitThresh()
  * @param[in] threshold proximity value needed to end gesture mode
  * @return True if operation successful. False otherwise.
  */
-bool setGestureExitThresh(unsigned char threshold)
+bool setGestureExitThresh(uint8_t threshold)
 {
     if( !wireWriteDataByte(APDS9960_GEXTH, threshold) ) {
         return false;
@@ -1473,9 +1477,9 @@ bool setGestureExitThresh(unsigned char threshold)
  *
  * @return the current photodiode gain. 0xFF on error.
  */
-unsigned char getGestureGain()
+uint8_t getGestureGain()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF2 register */
     if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
@@ -1500,9 +1504,9 @@ unsigned char getGestureGain()
  * @param[in] gain the value for the photodiode gain
  * @return True if operation successful. False otherwise.
  */
-bool setGestureGain(unsigned char gain)
+bool setGestureGain(uint8_t gain)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF2 register */
     if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
@@ -1534,9 +1538,9 @@ bool setGestureGain(unsigned char gain)
  *
  * @return the LED drive current value. 0xFF on error.
  */
-unsigned char getGestureLEDDrive()
+uint8_t getGestureLEDDrive()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF2 register */
     if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
@@ -1561,9 +1565,9 @@ unsigned char getGestureLEDDrive()
  * @param[in] drive the value for the LED drive current
  * @return True if operation successful. False otherwise.
  */
-bool setGestureLEDDrive(unsigned char drive)
+bool setGestureLEDDrive(uint8_t drive)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF2 register */
     if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
@@ -1599,9 +1603,9 @@ bool setGestureLEDDrive(unsigned char drive)
  *
  * @return the current wait time between gestures. 0xFF on error.
  */
-unsigned char getGestureWaitTime()
+uint8_t getGestureWaitTime()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF2 register */
     if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
@@ -1630,9 +1634,9 @@ unsigned char getGestureWaitTime()
  * @param[in] the value for the wait time
  * @return True if operation successful. False otherwise.
  */
-bool setGestureWaitTime(unsigned char time)
+bool setGestureWaitTime(uint8_t time)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF2 register */
     if( !wireReadDataByte(APDS9960_GCONF2, &val) ) {
@@ -1658,22 +1662,22 @@ bool setGestureWaitTime(unsigned char time)
  * @param[out] threshold current low threshold stored on the APDS-9960
  * @return True if operation successful. False otherwise.
  */
-bool getLightIntLowThreshold(unsigned int threshold)
+bool getLightIntLowThreshold(uint16_t *threshold)
 {
-    unsigned char val_byte;
-    threshold = 0;
+    uint8_t val_byte;
+    *threshold = 0;
 
     /* Read value from ambient light low threshold, low byte register */
     if( !wireReadDataByte(APDS9960_AILTL, &val_byte) ) {
         return false;
     }
-    threshold = val_byte;
+    *threshold = val_byte;
 
     /* Read value from ambient light low threshold, high byte register */
     if( !wireReadDataByte(APDS9960_AILTH, &val_byte) ) {
         return false;
     }
-    threshold = threshold + ((unsigned int)val_byte << 8);
+    *threshold = *threshold + ((uint16_t)val_byte << 8);
 
     return true;
 }
@@ -1684,10 +1688,10 @@ bool getLightIntLowThreshold(unsigned int threshold)
  * @param[in] threshold low threshold value for interrupt to trigger
  * @return True if operation successful. False otherwise.
  */
-bool setLightIntLowThreshold(unsigned int threshold)
+bool setLightIntLowThreshold(uint16_t threshold)
 {
-    unsigned char val_low;
-    unsigned char val_high;
+    uint8_t val_low;
+    uint8_t val_high;
 
     /* Break 16-bit threshold into 2 8-bit values */
     val_low = threshold & 0x00FF;
@@ -1712,22 +1716,22 @@ bool setLightIntLowThreshold(unsigned int threshold)
  * @param[out] threshold current low threshold stored on the APDS-9960
  * @return True if operation successful. False otherwise.
  */
-bool getLightIntHighThreshold(unsigned int threshold)
+bool getLightIntHighThreshold(uint16_t *threshold)
 {
-    unsigned char val_byte;
-    threshold = 0;
+    uint8_t val_byte;
+    *threshold = 0;
 
     /* Read value from ambient light high threshold, low byte register */
     if( !wireReadDataByte(APDS9960_AIHTL, &val_byte) ) {
         return false;
     }
-    threshold = val_byte;
+    *threshold = val_byte;
 
     /* Read value from ambient light high threshold, high byte register */
     if( !wireReadDataByte(APDS9960_AIHTH, &val_byte) ) {
         return false;
     }
-    threshold = threshold + ((unsigned int)val_byte << 8);
+    *threshold = *threshold + ((uint16_t)val_byte << 8);
 
     return true;
 }
@@ -1738,10 +1742,10 @@ bool getLightIntHighThreshold(unsigned int threshold)
  * @param[in] threshold high threshold value for interrupt to trigger
  * @return True if operation successful. False otherwise.
  */
-bool setLightIntHighThreshold(unsigned int threshold)
+bool setLightIntHighThreshold(uint16_t threshold)
 {
-    unsigned char val_low;
-    unsigned char val_high;
+    uint8_t val_low;
+    uint8_t val_high;
 
     /* Break 16-bit threshold into 2 8-bit values */
     val_low = threshold & 0x00FF;
@@ -1766,12 +1770,12 @@ bool setLightIntHighThreshold(unsigned int threshold)
  * @param[out] threshold current low threshold stored on the APDS-9960
  * @return True if operation successful. False otherwise.
  */
-bool getProximityIntLowThreshold(unsigned char threshold)
+bool getProximityIntLowThreshold(uint8_t *threshold)
 {
-    threshold = 0;
+    *threshold = 0;
 
     /* Read value from proximity low threshold register */
-    if( !wireReadDataByte(APDS9960_PILT, &threshold) ) {
+    if( !wireReadDataByte(APDS9960_PILT, threshold) ) {
         return false;
     }
 
@@ -1784,7 +1788,7 @@ bool getProximityIntLowThreshold(unsigned char threshold)
  * @param[in] threshold low threshold value for interrupt to trigger
  * @return True if operation successful. False otherwise.
  */
-bool setProximityIntLowThreshold(unsigned char threshold)
+bool setProximityIntLowThreshold(uint8_t threshold)
 {
 
     /* Write threshold value to register */
@@ -1801,12 +1805,12 @@ bool setProximityIntLowThreshold(unsigned char threshold)
  * @param[out] threshold current low threshold stored on the APDS-9960
  * @return True if operation successful. False otherwise.
  */
-bool getProximityIntHighThreshold(unsigned char threshold)
+bool getProximityIntHighThreshold(uint8_t *threshold)
 {
-    threshold = 0;
+    *threshold = 0;
 
     /* Read value from proximity low threshold register */
-    if( !wireReadDataByte(APDS9960_PIHT, &threshold) ) {
+    if( !wireReadDataByte(APDS9960_PIHT, threshold) ) {
         return false;
     }
 
@@ -1819,7 +1823,7 @@ bool getProximityIntHighThreshold(unsigned char threshold)
  * @param[in] threshold high threshold value for interrupt to trigger
  * @return True if operation successful. False otherwise.
  */
-bool setProximityIntHighThreshold(unsigned char threshold)
+bool setProximityIntHighThreshold(uint8_t threshold)
 {
 
     /* Write threshold value to register */
@@ -1835,9 +1839,9 @@ bool setProximityIntHighThreshold(unsigned char threshold)
  *
  * @return 1 if interrupts are enabled, 0 if not. 0xFF on error.
  */
-unsigned char getAmbientLightIntEnable()
+uint8_t getAmbientLightIntEnable()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from ENABLE register */
     if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
@@ -1856,9 +1860,9 @@ unsigned char getAmbientLightIntEnable()
  * @param[in] enable 1 to enable interrupts, 0 to turn them off
  * @return True if operation successful. False otherwise.
  */
-bool setAmbientLightIntEnable(unsigned char enable)
+bool setAmbientLightIntEnable(uint8_t enable)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from ENABLE register */
     if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
@@ -1884,9 +1888,9 @@ bool setAmbientLightIntEnable(unsigned char enable)
  *
  * @return 1 if interrupts are enabled, 0 if not. 0xFF on error.
  */
-unsigned char getProximityIntEnable()
+uint8_t getProximityIntEnable()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from ENABLE register */
     if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
@@ -1905,9 +1909,9 @@ unsigned char getProximityIntEnable()
  * @param[in] enable 1 to enable interrupts, 0 to turn them off
  * @return True if operation successful. False otherwise.
  */
-bool setProximityIntEnable(unsigned char enable)
+bool setProximityIntEnable(uint8_t enable)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from ENABLE register */
     if( !wireReadDataByte(APDS9960_ENABLE, &val) ) {
@@ -1933,9 +1937,9 @@ bool setProximityIntEnable(unsigned char enable)
  *
  * @return 1 if interrupts are enabled, 0 if not. 0xFF on error.
  */
-unsigned char getGestureIntEnable()
+uint8_t getGestureIntEnable()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF4 register */
     if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
@@ -1954,9 +1958,9 @@ unsigned char getGestureIntEnable()
  * @param[in] enable 1 to enable interrupts, 0 to turn them off
  * @return True if operation successful. False otherwise.
  */
-bool setGestureIntEnable(unsigned char enable)
+bool setGestureIntEnable(uint8_t enable)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF4 register */
     if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
@@ -1984,7 +1988,7 @@ bool setGestureIntEnable(unsigned char enable)
  */
 bool clearAmbientLightInt()
 {
-    unsigned char throwaway;
+    uint8_t throwaway;
     if( !wireReadDataByte(APDS9960_AICLEAR, &throwaway) ) {
         return false;
     }
@@ -1999,7 +2003,7 @@ bool clearAmbientLightInt()
  */
 bool clearProximityInt()
 {
-    unsigned char throwaway;
+    uint8_t throwaway;
     if( !wireReadDataByte(APDS9960_PICLEAR, &throwaway) ) {
         return false;
     }
@@ -2012,9 +2016,9 @@ bool clearProximityInt()
  *
  * @return 1 if gesture state machine is running, 0 if not. 0xFF on error.
  */
-unsigned char getGestureMode()
+uint8_t getGestureMode()
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF4 register */
     if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
@@ -2033,9 +2037,9 @@ unsigned char getGestureMode()
  * @param[in] mode 1 to enter gesture state machine, 0 to exit.
  * @return True if operation successful. False otherwise.
  */
-bool setGestureMode(unsigned char mode)
+bool setGestureMode(uint8_t mode)
 {
-    unsigned char val;
+    uint8_t val;
 
     /* Read value from GCONF4 register */
     if( !wireReadDataByte(APDS9960_GCONF4, &val) ) {
@@ -2065,17 +2069,53 @@ bool setGestureMode(unsigned char mode)
  * @param[in] val the 1-byte value to write to the I2C device
  * @return True if successful write operation. False otherwise.
  */
-bool wireWriteByte(unsigned char val)
+bool wireWriteByte(uint8_t val)
 {
-    //NEED FIXING
-    /*
-    Wire.beginTransmission(APDS9960_I2C_ADDR);
-    Wire.write(val);
-    if( Wire.endTransmission() != 0 ) {
-        return false;
+    I2C1_MESSAGE_STATUS status = I2C1_MESSAGE_PENDING;
+    uint16_t        timeOut, slaveTimeOut;
+    timeOut = 0;
+    slaveTimeOut = 0;
+
+    while(status != I2C1_MESSAGE_FAIL)
+    {
+        // write one byte to EEPROM (3 is the number of bytes to write)
+        I2C1_MasterWrite(  &val,
+                                1,
+                                APDS9960_I2C_ADDR,
+                                &status);
+
+        // wait for the message to be sent or status has changed.
+        while(status == I2C1_MESSAGE_PENDING)
+        {
+            // add some delay here
+
+            // timeout checking
+            // check for max retry and skip this byte
+            if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT)
+                return false;
+            else
+                slaveTimeOut++;
+        } 
+
+        if (status == I2C1_MESSAGE_COMPLETE) {
+            return true;
+        }
+
+        // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+        //               or I2C1_DATA_NO_ACK,
+        // The device may be busy and needs more time for the last
+        // write so we can retry writing the data, this is why we
+        // use a while loop here
+
+        // check for max retry and skip this byte
+        if (timeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+            return false;
+        }
+        else {
+            timeOut++;
+        }
     }
-    */
-    return true;
+    return false;
 }
 
 /**
@@ -2085,18 +2125,56 @@ bool wireWriteByte(unsigned char val)
  * @param[in] val the 1-byte value to write to the I2C device
  * @return True if successful write operation. False otherwise.
  */
-bool wireWriteDataByte(unsigned char reg, unsigned char val)
+bool wireWriteDataByte(uint8_t reg, uint8_t val)
 {
-    //NEED FIXING
-    /*
-    Wire.beginTransmission(APDS9960_I2C_ADDR);
-    Wire.write(reg);
-    Wire.write(val);
-    if( Wire.endTransmission() != 0 ) {
-        return false;
+    I2C1_MESSAGE_STATUS status = I2C1_MESSAGE_PENDING;
+    uint16_t        timeOut, slaveTimeOut;
+    uint8_t         writeBuffer[2];
+    timeOut = 0;
+    slaveTimeOut = 0;
+    writeBuffer[0] = reg;
+    writeBuffer[1] = val;
+
+    while(status != I2C1_MESSAGE_FAIL)
+    {
+        // write one byte to EEPROM (3 is the number of bytes to write)
+        I2C1_MasterWrite(  writeBuffer,
+                                2,
+                                APDS9960_I2C_ADDR,
+                                &status);
+
+        // wait for the message to be sent or status has changed.
+        while(status == I2C1_MESSAGE_PENDING)
+        {
+            // add some delay here
+
+            // timeout checking
+            // check for max retry and skip this byte
+            if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT)
+                return false;
+            else
+                slaveTimeOut++;
+        } 
+
+        if (status == I2C1_MESSAGE_COMPLETE) {
+            return true;
+        }
+
+        // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+        //               or I2C1_DATA_NO_ACK,
+        // The device may be busy and needs more time for the last
+        // write so we can retry writing the data, this is why we
+        // use a while loop here
+
+        // check for max retry and skip this byte
+        if (timeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+            return false;
+        }
+        else {
+            timeOut++;
+        }
     }
-    */
-    return true;
+    return false;
 }
 
 /**
@@ -2107,24 +2185,66 @@ bool wireWriteDataByte(unsigned char reg, unsigned char val)
  * @param[in] len the length (in bytes) of the data to write
  * @return True if successful write operation. False otherwise.
  */
-bool wireWriteDataBlock(  unsigned char reg,
-                                        unsigned char *val,
+bool wireWriteDataBlock(  uint8_t reg,
+                                        uint8_t *val,
                                         unsigned int len)
 {
-    unsigned int i;
+    I2C1_MESSAGE_STATUS status = I2C1_MESSAGE_PENDING;
+    uint16_t        timeOut, slaveTimeOut;
+    uint8_t        *writeBuffer = (uint8_t*) malloc((len + 1) * sizeof(uint8_t));
+    timeOut = 0;
+    slaveTimeOut = 0;
+    writeBuffer[0] = reg;
+    int i;
+    for (i = 0; i < len; i++) {
+        writeBuffer[i+1] = val[i];
+    }
 
-    //NEED FIXING
-    /*
-    Wire.beginTransmission(APDS9960_I2C_ADDR);
-    Wire.write(reg);
-    for(i = 0; i < len; i++) {
-        Wire.beginTransmission(val[i]);
+    while(status != I2C1_MESSAGE_FAIL)
+    {
+        // write one byte to EEPROM (3 is the number of bytes to write)
+        I2C1_MasterWrite(  writeBuffer,
+                                (uint8_t)(len + 1),
+                                APDS9960_I2C_ADDR,
+                                &status);
+
+        // wait for the message to be sent or status has changed.
+        while(status == I2C1_MESSAGE_PENDING)
+        {
+            // add some delay here
+
+            // timeout checking
+            // check for max retry and skip this byte
+            if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT) {
+                free(writeBuffer);
+                return false;
+            } else {
+                slaveTimeOut++;
+            }
+        } 
+
+        if (status == I2C1_MESSAGE_COMPLETE) {
+            free(writeBuffer);
+            return true;
+        }
+
+        // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+        //               or I2C1_DATA_NO_ACK,
+        // The device may be busy and needs more time for the last
+        // write so we can retry writing the data, this is why we
+        // use a while loop here
+
+        // check for max retry and skip this byte
+        if (timeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+            free(writeBuffer);
+            return false;
+        }
+        else {
+            timeOut++;
+        }
     }
-    if( Wire.endTransmission() != 0 ) {
-        return false;
-    }
-    */
-    return true;
+    free(writeBuffer);
+    return false;
 }
 
 /**
@@ -2134,23 +2254,100 @@ bool wireWriteDataBlock(  unsigned char reg,
  * @param[out] the value returned from the register
  * @return True if successful read operation. False otherwise.
  */
-bool wireReadDataByte(unsigned char reg, unsigned char *val)
+bool wireReadDataByte(uint8_t reg, uint8_t *val)
 {
+    I2C1_MESSAGE_STATUS status = I2C1_MESSAGE_PENDING;
+    uint16_t        retryTimeOut, slaveTimeOut;
+    retryTimeOut = 0;
+    slaveTimeOut = 0;
+    uint8_t writeBuffer[1];
+    writeBuffer[0] = reg;
 
-    /* Indicate which register we want to read from */
-    if (!wireWriteByte(reg)) {
-        return false;
-    }
+    while(status != I2C1_MESSAGE_FAIL)
+    {
+        // write one byte to EEPROM (2 is the count of bytes to write)
+        I2C1_MasterWrite(    writeBuffer,
+                                1,
+                                APDS9960_I2C_ADDR,
+                                &status);
+        // wait for the message to be sent or status has changed.
+        while(status == I2C1_MESSAGE_PENDING)
+        {  
+            // add some delay here
 
-    /* Read from register */
-    //NEED FIXING
-    /*
-    Wire.requestFrom(APDS9960_I2C_ADDR, 1);
-    while (Wire.available()) {
-        val = Wire.read();
+            // timeout checking
+            // check for max retry and skip this byte
+            if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT)
+                return false;
+            else
+                slaveTimeOut++;
+        }
+
+        if (status == I2C1_MESSAGE_COMPLETE)
+            break;
+
+        // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+        //               or I2C1_DATA_NO_ACK,
+        // The device may be busy and needs more time for the last
+        // write so we can retry writing the data, this is why we
+        // use a while loop here
+
+        // check for max retry and skip this byte
+        if (retryTimeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+            return false;
+        }
+        else {
+            retryTimeOut++;
+        }
     }
-    */
-    return true;
+    
+    if (status == I2C1_MESSAGE_COMPLETE)
+    {
+
+        // this portion will read the byte from the memory location.
+        retryTimeOut = 0;
+        slaveTimeOut = 0;
+
+        while(status != I2C1_MESSAGE_FAIL)
+        {
+            // write one byte to EEPROM (2 is the count of bytes to write)
+            I2C1_MasterRead(     val,
+                                    1,
+                                    APDS9960_I2C_ADDR,
+                                    &status);
+
+            // wait for the message to be sent or status has changed.
+            while(status == I2C1_MESSAGE_PENDING)
+            {
+                // add some delay here
+
+                // timeout checking
+                // check for max retry and skip this byte
+                if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT)
+                    return false;
+                else
+                    slaveTimeOut++;
+            }
+
+            if (status == I2C1_MESSAGE_COMPLETE)
+                return true;
+
+            // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+            //               or I2C1_DATA_NO_ACK,
+            // The device may be busy and needs more time for the last
+            // write so we can retry writing the data, this is why we
+            // use a while loop here
+
+            // check for max retry and skip this byte
+            if (retryTimeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+                return false;
+            }
+            else {
+                retryTimeOut++;
+            }
+        }
+    }
+    return false;
 }
 
 /**
@@ -2161,28 +2358,101 @@ bool wireReadDataByte(unsigned char reg, unsigned char *val)
  * @param[in] len number of bytes to read
  * @return Number of bytes read. -1 on read error.
  */
-int wireReadDataBlock(   unsigned char reg,
-                                        unsigned char *val,
-                                        unsigned int len)
+int wireReadDataBlock(   uint8_t reg,
+                                        uint8_t *val,
+                                        uint8_t len)
 {
-    unsigned char i = 0;
+    I2C1_MESSAGE_STATUS status = I2C1_MESSAGE_PENDING;
+    uint16_t        retryTimeOut, slaveTimeOut;
+    retryTimeOut = 0;
+    slaveTimeOut = 0;
+    uint8_t writeBuffer[1];
+    writeBuffer[0] = reg;
 
-    /* Indicate which register we want to read from */
-    if (!wireWriteByte(reg)) {
-        return -1;
-    }
+    while(status != I2C1_MESSAGE_FAIL)
+    {
+        // write one byte to EEPROM (2 is the count of bytes to write)
+        I2C1_MasterWrite(    writeBuffer,
+                                1,
+                                APDS9960_I2C_ADDR,
+                                &status);
 
-    /* Read block data */
-    //NEED FIXING
-    /*
-    Wire.requestFrom(APDS9960_I2C_ADDR, len);
-    while (Wire.available()) {
-        if (i >= len) {
-            return -1;
+        // wait for the message to be sent or status has changed.
+        while(status == I2C1_MESSAGE_PENDING)
+        {
+            // add some delay here
+
+            // timeout checking
+            // check for max retry and skip this byte
+            if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT)
+                return -1;
+            else
+                slaveTimeOut++;
         }
-        val[i] = Wire.read();
-        i++;
+
+        if (status == I2C1_MESSAGE_COMPLETE)
+            break;
+
+        // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+        //               or I2C1_DATA_NO_ACK,
+        // The device may be busy and needs more time for the last
+        // write so we can retry writing the data, this is why we
+        // use a while loop here
+
+        // check for max retry and skip this byte
+        if (retryTimeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+            return false;
+        }
+        else {
+            retryTimeOut++;
+        }
     }
-     */
-    return i;
+    
+    if (status == I2C1_MESSAGE_COMPLETE)
+    {
+
+        // this portion will read the byte from the memory location.
+        retryTimeOut = 0;
+        slaveTimeOut = 0;
+
+        while(status != I2C1_MESSAGE_FAIL)
+        {
+            // write one byte to EEPROM (2 is the count of bytes to write)
+            I2C1_MasterRead(     val,
+                                    len,
+                                    APDS9960_I2C_ADDR,
+                                    &status);
+
+            // wait for the message to be sent or status has changed.
+            while(status == I2C1_MESSAGE_PENDING)
+            {
+                // add some delay here
+
+                // timeout checking
+                // check for max retry and skip this byte
+                if (slaveTimeOut == SLAVE_I2C_GENERIC_DEVICE_TIMEOUT)
+                    return -1;
+                else
+                    slaveTimeOut++;
+            }
+
+            if (status == I2C1_MESSAGE_COMPLETE)
+                return len;
+
+            // if status is  I2C1_MESSAGE_ADDRESS_NO_ACK,
+            //               or I2C1_DATA_NO_ACK,
+            // The device may be busy and needs more time for the last
+            // write so we can retry writing the data, this is why we
+            // use a while loop here
+
+            // check for max retry and skip this byte
+            if (retryTimeOut == SLAVE_I2C_GENERIC_RETRY_MAX) {
+                return -1;
+            }
+            else {
+                retryTimeOut++;
+            }
+        }
+    }
+    return -1;
 }
